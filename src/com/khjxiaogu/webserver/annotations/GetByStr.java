@@ -7,10 +7,12 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 import com.khjxiaogu.webserver.wrappers.InAdapter;
+import com.khjxiaogu.webserver.wrappers.InStringAdapter;
 import com.khjxiaogu.webserver.wrappers.inadapters.NopIn;
 
 @Retention(RUNTIME)
 @Target(PARAMETER)
-public @interface GetBy {
-	public Class<? extends InAdapter> value() default NopIn.class;
+public @interface GetByStr {
+	public Class<? extends InStringAdapter> value() default NopIn.class;
+	public String param() default "";
 }

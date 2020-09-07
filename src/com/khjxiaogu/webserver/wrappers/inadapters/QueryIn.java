@@ -1,4 +1,4 @@
-package com.khjxiaogu.webserver.wrappers.adapters;
+package com.khjxiaogu.webserver.wrappers.inadapters;
 
 import com.khjxiaogu.webserver.web.lowlayer.Request;
 import com.khjxiaogu.webserver.wrappers.InAdapter;

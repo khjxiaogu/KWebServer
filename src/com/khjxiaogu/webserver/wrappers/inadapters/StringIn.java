@@ -1,4 +1,4 @@
-package com.khjxiaogu.webserver.wrappers.adapters;
+package com.khjxiaogu.webserver.wrappers.inadapters;
 
 import java.nio.charset.StandardCharsets;
 

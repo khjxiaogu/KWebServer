@@ -1,5 +1,6 @@
 package com.khjxiaogu.webserver.wrappers;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -18,6 +19,7 @@ import com.google.gson.JsonPrimitive;
 import com.khjxiaogu.webserver.annotations.Adapter;
 import com.khjxiaogu.webserver.annotations.ForceProtocol;
 import com.khjxiaogu.webserver.annotations.GetBy;
+import com.khjxiaogu.webserver.annotations.GetByStr;
 import com.khjxiaogu.webserver.annotations.HttpMethod;
 import com.khjxiaogu.webserver.annotations.HttpPath;
 import com.khjxiaogu.webserver.web.CallBack;
@@ -249,7 +251,15 @@ class MethodAdaptProvider implements ServerProvider {
 	private ServiceClass objthis;
 	private InAdapter[] paramadap;
 	private OutAdapter resultadap;
-
+	@FunctionalInterface
+	interface AnnotationHandler{
+		InAdapter handle(Annotation anno) throws Exception;
+	}
+	private static Map<Class<?>,AnnotationHandler> handlers=new HashMap<>();
+	static {
+		handlers.put(GetBy.class,anno->((GetBy)anno).value().getConstructor().newInstance());
+		handlers.put(GetByStr.class,anno->((GetByStr)anno).value().getConstructor(String.class).newInstance(((GetByStr)anno).param()));
+	}
 	public MethodAdaptProvider(Method met, ServiceClass objthis) throws InstantiationException, IllegalAccessException,
 	        IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
 		this.met = met;
@@ -258,9 +268,17 @@ class MethodAdaptProvider implements ServerProvider {
 		paramadap = new InAdapter[met.getParameterCount()];
 		int i = 0;
 		for (Parameter param : met.getParameters()) {
-			GetBy anno = param.getAnnotation(GetBy.class);
-			if (anno != null)
-				paramadap[i++] = anno.value().getConstructor().newInstance();
+			Annotation[] annos = param.getAnnotations();
+			for(Annotation anno:annos) {
+				AnnotationHandler ah=handlers.get(anno.getClass());
+				if(ah!=null)
+					try {
+						paramadap[i++] = ah.handle(anno);
+					} catch (Exception e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+			}
 		}
 		resultadap = met.getAnnotation(Adapter.class).value().getConstructor().newInstance();
 	}
@@ -276,7 +294,7 @@ class MethodAdaptProvider implements ServerProvider {
 							params[i] = paramadap[i].handle(req);
 						else
 							params[i] = req;
-				resultadap.handle((HResult) met.invoke(objthis, params), res);
+				resultadap.handle((ResultDTO) met.invoke(objthis, params), res);
 				;
 			} catch (Exception e) {
 				// TODO Auto-generated catch block

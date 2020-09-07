@@ -20,9 +20,9 @@ public class MethodAdapter implements IOAdapter {
 		this.objthis = objthis;
 	}
 
-	protected final HResult callMethod(Object... args)
+	protected final ResultDTO callMethod(Object... args)
 	        throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-		return (HResult) method.invoke(objthis, args);
+		return (ResultDTO) method.invoke(objthis, args);
 	}
 
 	@Override
