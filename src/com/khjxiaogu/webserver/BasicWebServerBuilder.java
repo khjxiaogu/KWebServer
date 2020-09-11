@@ -965,6 +965,9 @@ public class BasicWebServerBuilder implements CommandDispatcher {
 	 *                              如果interrupted exception发生了
 	 */
 	public BasicWebServerBuilder serverHttps(int port) throws InterruptedException {
+		return serverHttps("0.0.0.0",port);
+	}
+	public BasicWebServerBuilder serverHttps(String addr,int port) throws InterruptedException {
 		if (port == 0)
 			return this;
 		if (slc != null) {
@@ -980,7 +983,7 @@ public class BasicWebServerBuilder implements CommandDispatcher {
 					                .addLast(new ChunkedWriteHandler()).addLast(new WebSocketServerCompressionHandler())
 					                .addLast(cbr);
 				        }
-			        }).bind("0.0.0.0", port).sync().channel());
+			        }).bind(addr, port).sync().channel());
 		}
 		return this;
 	}
@@ -997,6 +1000,9 @@ public class BasicWebServerBuilder implements CommandDispatcher {
 	 *                              如果interrupted exception发生了
 	 */
 	public BasicWebServerBuilder serverHttp(int port) throws InterruptedException {
+		return serverHttp("0.0.0.0",port);
+	}
+	public BasicWebServerBuilder serverHttp(String addr,int port) throws InterruptedException {
 		if (port == 0)
 			return this;
 		NettyHandlerBridge cbr = new NettyHandlerBridge(bridge).setHttps(false);
@@ -1010,10 +1016,9 @@ public class BasicWebServerBuilder implements CommandDispatcher {
 				                .addLast(new ChunkedWriteHandler()).addLast(new WebSocketServerCompressionHandler())
 				                .addLast(cbr);
 			        }
-		        }).bind("0.0.0.0", port).sync().channel());
+		        }).bind(addr, port).sync().channel());
 		return this;
 	}
-
 	/**
 	 * Await servers closed.<br>
 	 * 等待服务器关闭
