@@ -8,6 +8,6 @@ public class QueryValue implements InStringAdapter {
 	public QueryValue(String key) {this.key=key;}
 
 	@Override
-	public Object handle(Request req) throws Exception { return req.query.get(key); }
+	public Object handle(Request req) throws Exception { return req.getQuery().get(key); }
 
 }

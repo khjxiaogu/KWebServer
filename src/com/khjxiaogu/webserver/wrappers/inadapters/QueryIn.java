@@ -8,6 +8,6 @@ public class QueryIn implements InAdapter {
 	public QueryIn() {}
 
 	@Override
-	public Object handle(Request req) throws Exception { return req.query; }
+	public Object handle(Request req) throws Exception { return req.getQuery(); }
 
 }

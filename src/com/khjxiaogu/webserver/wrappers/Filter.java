@@ -9,7 +9,7 @@ import com.khjxiaogu.webserver.web.lowlayer.Response;
  *
  * @author khjxiaogu file: IOWrapper.java time: 2020年8月15日
  */
-public interface IOWrapper {
+public interface Filter {
 
 	/**
 	 * Handle.<br>

@@ -41,7 +41,7 @@ public class Request {
 	 * The http query(URL only).<br>
 	 * 请求参数（仅包含URL中的）.
 	 */
-	public final Map<String, String> query;
+	private Map<String, String> query;
 
 	/**
 	 * The full request path.<br>
@@ -99,7 +99,6 @@ public class Request {
 		method = httpMethod.toString();
 		this.body = body;
 		queryString = uri.getQuery();
-		query = Utils.queryToMap(queryString);
 		path = uri.getPath();
 		fullpath = path;
 		remote = (InetSocketAddress) socketAddress;
@@ -128,5 +127,11 @@ public class Request {
 			path = "/";
 		else
 			path = path.substring(starts.length());
+	}
+
+	public Map<String, String> getQuery() { 
+		if(query!=null)
+			return query;
+		return query=Utils.queryToMap(queryString);
 	}
 }
