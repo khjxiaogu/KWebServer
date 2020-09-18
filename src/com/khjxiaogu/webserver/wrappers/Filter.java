@@ -21,5 +21,5 @@ public interface Filter {
 	 * @throws Exception if an exception occurred.<br>
 	 *                   如果exception发生了
 	 */
-	public boolean handle(Request req, Response res) throws Exception;
+	public boolean handle(Request req, Response res,FilterChain filters) throws Exception;
 }

@@ -207,6 +207,7 @@ public class Response {
 		 *
 		 * }
 		 */
+		if(!f.exists())return;
 		try {
 			RandomAccessFile raf = new RandomAccessFile(f, "r");
 			response.setStatus(HttpResponseStatus.valueOf(status));

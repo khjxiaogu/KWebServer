@@ -22,6 +22,9 @@ import com.khjxiaogu.webserver.annotations.GetBy;
 import com.khjxiaogu.webserver.annotations.GetByStr;
 import com.khjxiaogu.webserver.annotations.HttpMethod;
 import com.khjxiaogu.webserver.annotations.HttpPath;
+import com.khjxiaogu.webserver.annotations.Query;
+import com.khjxiaogu.webserver.command.CommandHandler;
+import com.khjxiaogu.webserver.command.CommandSender;
 import com.khjxiaogu.webserver.web.CallBack;
 import com.khjxiaogu.webserver.web.ContextHandler;
 import com.khjxiaogu.webserver.web.ForceSecureHandler;
@@ -30,6 +33,7 @@ import com.khjxiaogu.webserver.web.MethodRestrictHandler;
 import com.khjxiaogu.webserver.web.ServerProvider;
 import com.khjxiaogu.webserver.web.ServiceClass;
 import com.khjxiaogu.webserver.web.URIMatchDispatchHandler;
+import com.khjxiaogu.webserver.wrappers.inadapters.QueryValue;
 
 public class ServiceClassWrapper extends URIMatchDispatchHandler {
 	// public static SystemLogger logger=new SystemLogger("反射容器");
@@ -37,11 +41,12 @@ public class ServiceClassWrapper extends URIMatchDispatchHandler {
 	        IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
 		this(ServiceClassWrapper.getClassFromJsonObject(Arg, cp));
 	}
-
+	private ServiceClass iobj;
 	private Map<String, ContextHandler<?>> paths = new HashMap<>();
 
 	public ServiceClassWrapper(ServiceClass object) throws InstantiationException, IllegalAccessException,
 	        IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
+		iobj=object;
 		Class<?> clazz = object.getClass();
 		object.getLogger().info("正在载入...");
 		Map<String, Integer> meths = new HashMap<>();
@@ -219,6 +224,9 @@ public class ServiceClassWrapper extends URIMatchDispatchHandler {
 			throw new InvalidParameterException(je.getClass() + " cannot be convert to " + clazz.getSimpleName());
 		return null;
 	}
+
+	public ServiceClass getObject() { return iobj; }
+
 }
 
 class MethodServiceProvider implements ServerProvider {
@@ -255,10 +263,11 @@ class MethodAdaptProvider implements ServerProvider {
 	interface AnnotationHandler{
 		InAdapter handle(Annotation anno) throws Exception;
 	}
-	private static Map<Class<?>,AnnotationHandler> handlers=new HashMap<>();
+	private static Map<Class<? extends Annotation>,AnnotationHandler> handlers=new HashMap<>();
 	static {
 		handlers.put(GetBy.class,anno->((GetBy)anno).value().getConstructor().newInstance());
 		handlers.put(GetByStr.class,anno->((GetByStr)anno).value().getConstructor(String.class).newInstance(((GetByStr)anno).param()));
+		handlers.put(Query.class,anno->new QueryValue(((Query)anno).value()));
 	}
 	public MethodAdaptProvider(Method met, ServiceClass objthis) throws InstantiationException, IllegalAccessException,
 	        IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
@@ -270,15 +279,16 @@ class MethodAdaptProvider implements ServerProvider {
 		for (Parameter param : met.getParameters()) {
 			Annotation[] annos = param.getAnnotations();
 			for(Annotation anno:annos) {
-				AnnotationHandler ah=handlers.get(anno.getClass());
+				AnnotationHandler ah=handlers.get(anno.annotationType());
 				if(ah!=null)
 					try {
-						paramadap[i++] = ah.handle(anno);
+						paramadap[i] = ah.handle(anno);
 					} catch (Exception e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 			}
+			i++;
 		}
 		resultadap = met.getAnnotation(Adapter.class).value().getConstructor().newInstance();
 	}
@@ -286,8 +296,9 @@ class MethodAdaptProvider implements ServerProvider {
 	@Override
 	public CallBack getListener() {
 		return (req, res) -> {
+			Object[] params = null;
 			try {
-				Object[] params = new Object[paramadap.length];
+				params = new Object[paramadap.length];
 				if (paramadap.length > 0)
 					for (int i = 0; i < paramadap.length; i++)
 						if (paramadap[i] != null)
@@ -295,10 +306,16 @@ class MethodAdaptProvider implements ServerProvider {
 						else
 							params[i] = req;
 				resultadap.handle((ResultDTO) met.invoke(objthis, params), res);
-				;
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace(objthis.getLogger());
+				objthis.getLogger().warning("error occured at "+objthis.getClass().getSimpleName()+"#"+met.getName());
+				StringBuilder type=new StringBuilder("types:");
+				for(Object o:params) {
+					type.append(o.getClass().getSimpleName());
+					type.append(",");
+				}
+				objthis.getLogger().warning(type);
 				if (!res.isWritten())
 					res.write(500, null, "Internal Server Error".getBytes(StandardCharsets.UTF_8));
 			}

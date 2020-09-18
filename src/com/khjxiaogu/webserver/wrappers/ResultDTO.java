@@ -3,6 +3,8 @@ package com.khjxiaogu.webserver.wrappers;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.netty.util.AsciiString;
+
 // TODO: Auto-generated Javadoc
 /**
  * HTTP结果传输对象.
@@ -81,7 +83,15 @@ public class ResultDTO {
 		this.code = code;
 		this.setBody(body);
 	}
-
+	/**
+	 * Write.<br>
+	 *
+	 * @param code the code<br>
+	 * @param body the body<br>
+	 */
+	public void write(int code) {
+		this.code = code;
+	}
 	/**
 	 * Instantiates a new ResultDTO.<br>
 	 * 新建一个ResultDTO类<br>
@@ -103,4 +113,8 @@ public class ResultDTO {
 	public Object getBody() { return body; }
 
 	public void setBody(Object body) { this.body = body; }
+
+	public void setHeader(CharSequence k, String val) {
+		addHeader(k,val);
+	}
 }

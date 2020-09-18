@@ -10,6 +10,7 @@ import java.util.Scanner;
 
 import javax.net.ssl.SSLEngine;
 
+import com.khjxiaogu.webserver.BasicWebServerBuilder.ServerContext;
 import com.khjxiaogu.webserver.command.CommandDispatcher;
 import com.khjxiaogu.webserver.command.CommandExp;
 import com.khjxiaogu.webserver.command.CommandExpSplitter.SplittedExp;
@@ -33,6 +34,8 @@ import com.khjxiaogu.webserver.web.lowlayer.NettyHandlerBridge;
 import com.khjxiaogu.webserver.wrappers.ServiceClassWrapper;
 
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.group.ChannelGroup;
@@ -44,10 +47,32 @@ import io.netty.handler.codec.http.HttpContentCompressor;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.codec.http.HttpServerKeepAliveHandler;
+import io.netty.handler.codec.http.HttpServerUpgradeHandler;
+import io.netty.handler.codec.http.HttpServerUpgradeHandler.UpgradeCodec;
+import io.netty.handler.codec.http.HttpServerUpgradeHandler.UpgradeCodecFactory;
 import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketServerCompressionHandler;
+import io.netty.handler.codec.http2.DefaultHttp2Connection;
+import io.netty.handler.codec.http2.DefaultHttp2ConnectionDecoder;
+import io.netty.handler.codec.http2.DefaultHttp2ConnectionEncoder;
+import io.netty.handler.codec.http2.DefaultHttp2FrameReader;
+import io.netty.handler.codec.http2.DefaultHttp2FrameWriter;
+import io.netty.handler.codec.http2.Http2CodecUtil;
+import io.netty.handler.codec.http2.Http2Connection;
+import io.netty.handler.codec.http2.Http2ConnectionDecoder;
+import io.netty.handler.codec.http2.Http2ConnectionEncoder;
+import io.netty.handler.codec.http2.Http2ConnectionHandlerBuilder;
+import io.netty.handler.codec.http2.Http2FrameCodecBuilder;
+import io.netty.handler.codec.http2.Http2ServerUpgradeCodec;
+import io.netty.handler.codec.http2.Http2Settings;
+import io.netty.handler.codec.http2.HttpToHttp2ConnectionHandler;
+import io.netty.handler.codec.http2.InboundHttp2ToHttpAdapter;
+import io.netty.handler.codec.http2.InboundHttp2ToHttpAdapterBuilder;
+import io.netty.handler.ssl.ApplicationProtocolNames;
+import io.netty.handler.ssl.ApplicationProtocolNegotiationHandler;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.stream.ChunkedWriteHandler;
+import io.netty.util.AsciiString;
 import io.netty.util.concurrent.UnorderedThreadPoolEventExecutor;
 
 // TODO: Auto-generated Javadoc
@@ -57,6 +82,22 @@ import io.netty.util.concurrent.UnorderedThreadPoolEventExecutor;
  * @author khjxiaogu file: BasicWebServerBuilder.java time: 2020年6月12日
  */
 public class BasicWebServerBuilder implements CommandDispatcher {
+
+	public class WrapperContext<T extends ContextHandler<T>, S extends ContextHandler<S>> extends ServerContext<URIMatchDispatchHandler, ServerContext<T, S>> {
+
+		protected WrapperContext(ServiceClassWrapper CtxCls, ServerContext<T, S> Super, CommandDispatcher command) {
+			super(CtxCls, Super, command);
+		}
+
+		@Override
+		public ServerContext<URIMatchDispatchHandler, ServerContext<T, S>> registerCommand() {
+			ServiceClass sc=((ServiceClassWrapper)Intern).getObject();
+			if (sc instanceof CommandHandler)
+				add((CommandHandler) sc);
+			return this;
+		}
+
+	}
 
 	/**
 	 * Class ServerContext.
@@ -69,12 +110,12 @@ public class BasicWebServerBuilder implements CommandDispatcher {
 	 */
 	public class ServerContext<T extends ContextHandler<T>, S extends ContextHandler<S>>
 	        implements ContextHandler<ServerContext<T, S>>, Context<S>, CommandDispatcher {
-		private T Intern;
-		private S sup;
-		private CommandDispatcher command;
-		private ServerProvider sec;
+		protected T Intern;
+		protected S sup;
+		protected CommandDispatcher command;
+		protected ServerProvider sec;
 
-		private ServerContext(T CtxCls, S Super, CommandDispatcher command) {
+		protected ServerContext(T CtxCls, S Super, CommandDispatcher command) {
 			Intern = CtxCls;
 			sec = CtxCls;
 			sup = Super;
@@ -352,7 +393,7 @@ public class BasicWebServerBuilder implements CommandDispatcher {
 
 		public ServerContext<URIMatchDispatchHandler, ServerContext<T, S>> createWrapper(ServiceClass obj) {
 			try {
-				return createDispatch(new ServiceClassWrapper(obj));
+				return new WrapperContext<>(new ServiceClassWrapper(obj), this, command);
 			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
 			        | InvocationTargetException | NoSuchMethodException | SecurityException e) {
 				e.printStackTrace();
@@ -569,7 +610,7 @@ public class BasicWebServerBuilder implements CommandDispatcher {
 		private CommandDispatcher command;
 		private ServerProvider sec;
 
-		private ProviderContext(S provider, T sup, CommandDispatcher command) {
+		protected ProviderContext(S provider, T sup, CommandDispatcher command) {
 			this.sup = sup;
 			this.provider = provider;
 			sec = provider;
@@ -967,6 +1008,24 @@ public class BasicWebServerBuilder implements CommandDispatcher {
 	public BasicWebServerBuilder serverHttps(int port) throws InterruptedException {
 		return serverHttps("0.0.0.0",port);
 	}
+	private static final UpgradeCodecFactory upgradeCodecFactory = new UpgradeCodecFactory() {
+        @Override
+        public UpgradeCodec newUpgradeCodec(CharSequence protocol) {
+            if (AsciiString.contentEquals(Http2CodecUtil.HTTP_UPGRADE_PROTOCOL_NAME, protocol)) {
+            	Http2Connection h2c=new DefaultHttp2Connection(true);
+            	Http2ConnectionEncoder h2e=new DefaultHttp2ConnectionEncoder(h2c,new DefaultHttp2FrameWriter());
+                return new Http2ServerUpgradeCodec(
+                		new Http2ConnectionHandlerBuilder()
+            			.codec(new DefaultHttp2ConnectionDecoder(h2c, h2e,new DefaultHttp2FrameReader()),h2e)
+            			.frameListener(new InboundHttp2ToHttpAdapterBuilder(h2c)
+            					.maxContentLength(1024*1024)
+            				.build()
+            			).build());
+            } else {
+                return null;
+            }
+        }
+};
 	public BasicWebServerBuilder serverHttps(String addr,int port) throws InterruptedException {
 		if (port == 0)
 			return this;
@@ -978,10 +1037,10 @@ public class BasicWebServerBuilder implements CommandDispatcher {
 				        public void initChannel(SocketChannel ch) {
 					        SSLEngine engine = slc.newEngine(ch.alloc());
 					        ch.pipeline().addLast(new SslHandler(engine)).addLast(new HttpServerCodec())
-					                .addLast(new HttpContentCompressor()).addLast(new HttpServerKeepAliveHandler())
-					                .addLast(new LowestCatcher("HTTPS")).addLast(new HttpObjectAggregator(1024 * 1024))
-					                .addLast(new ChunkedWriteHandler()).addLast(new WebSocketServerCompressionHandler())
-					                .addLast(cbr);
+			                .addLast(new HttpContentCompressor()).addLast(new HttpServerKeepAliveHandler())
+			                .addLast(new LowestCatcher("HTTPS")).addLast(new HttpObjectAggregator(1024 * 1024))
+			                .addLast(new ChunkedWriteHandler()).addLast(new WebSocketServerCompressionHandler())
+			                .addLast(cbr);
 				        }
 			        }).bind(addr, port).sync().channel());
 		}
@@ -1010,11 +1069,11 @@ public class BasicWebServerBuilder implements CommandDispatcher {
 		        .childHandler(new ChannelInitializer<SocketChannel>() {
 			        @Override
 			        public void initChannel(SocketChannel ch) {
-				        ch.pipeline().addLast(new HttpServerCodec()).addLast(new HttpContentCompressor())
-				                .addLast(new HttpServerKeepAliveHandler()).addLast(new LowestCatcher("HTTP"))
-				                .addLast(new HttpObjectAggregator(1024 * 1024))// max request payload 1m
-				                .addLast(new ChunkedWriteHandler()).addLast(new WebSocketServerCompressionHandler())
-				                .addLast(cbr);
+				        ch.pipeline().addLast(new HttpServerCodec())
+		                .addLast(new HttpContentCompressor()).addLast(new HttpServerKeepAliveHandler())
+		                .addLast(new LowestCatcher("HTTPS")).addLast(new HttpObjectAggregator(1024 * 1024))
+		                .addLast(new ChunkedWriteHandler()).addLast(new WebSocketServerCompressionHandler())
+		                .addLast(cbr);
 			        }
 		        }).bind(addr, port).sync().channel());
 		return this;
