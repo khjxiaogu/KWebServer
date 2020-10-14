@@ -39,7 +39,7 @@ class WebServerPluginClassLoader extends URLClassLoader {
 
 	public WebServerPluginClassLoader(WebServerPluginLoader loader, ClassLoader cparent, JsonObject desc, String name,
 	        File f) throws IOException {
-		super("kws plugin loader", new URL[] { f.toURI().toURL() }, cparent);
+		super(new URL[] { f.toURI().toURL() }, cparent);
 		this.name = name;
 		this.loader = loader;
 		this.description = desc;
