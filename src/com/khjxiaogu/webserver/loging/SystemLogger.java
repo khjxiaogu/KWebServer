@@ -48,7 +48,7 @@ public class SystemLogger extends PrintStream {
 
 		@Override
 		public void write(byte b[], int off, int len) throws IOException {
-			Objects.checkFromIndexSize(off, len, b.length);
+			//Objects.checkFromIndexSize(off, len, b.length);
 			ensureOpen();
 		}
 
