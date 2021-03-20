@@ -9,15 +9,16 @@ import com.khjxiaogu.webserver.web.lowlayer.Response;
 
 public class FilterChainIterator implements FilterChain {
 	Iterator<Filter> lsf;
-	List<Filter> Ignores=new ArrayList<>(0);
-	List<Filter> addons=new ArrayList<>(0);
+	List<Filter> Ignores = new ArrayList<>(0);
+	List<Filter> addons = new ArrayList<>(0);
+
 	public FilterChainIterator() {}
 
 	@Override
 	public void next(Request req, Response res) {
-		while(lsf.hasNext()) {
-			Filter f=lsf.next();
-			if(Ignores.indexOf(f)==-1)
+		while (lsf.hasNext()) {
+			Filter f = lsf.next();
+			if (Ignores.indexOf(f) == -1)
 				try {
 					lsf.next().handle(req, res, this);
 					break;
@@ -31,12 +32,10 @@ public class FilterChainIterator implements FilterChain {
 
 	@Override
 	public void addFilter(Filter f) {
-		
+
 	}
 
 	@Override
-	public void ignoreFilter(Filter type) {
-		Ignores.add(type);
-	}
+	public void ignoreFilter(Filter type) { Ignores.add(type); }
 
 }

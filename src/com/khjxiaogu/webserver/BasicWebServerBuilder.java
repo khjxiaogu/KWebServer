@@ -83,7 +83,8 @@ import io.netty.util.concurrent.UnorderedThreadPoolEventExecutor;
  */
 public class BasicWebServerBuilder implements CommandDispatcher {
 
-	public class WrapperContext<T extends ContextHandler<T>, S extends ContextHandler<S>> extends ServerContext<URIMatchDispatchHandler, ServerContext<T, S>> {
+	public class WrapperContext<T extends ContextHandler<T>, S extends ContextHandler<S>>
+	        extends ServerContext<URIMatchDispatchHandler, ServerContext<T, S>> {
 
 		protected WrapperContext(ServiceClassWrapper CtxCls, ServerContext<T, S> Super, CommandDispatcher command) {
 			super(CtxCls, Super, command);
@@ -91,7 +92,7 @@ public class BasicWebServerBuilder implements CommandDispatcher {
 
 		@Override
 		public ServerContext<URIMatchDispatchHandler, ServerContext<T, S>> registerCommand() {
-			ServiceClass sc=((ServiceClassWrapper)Intern).getObject();
+			ServiceClass sc = ((ServiceClassWrapper) Intern).getObject();
 			if (sc instanceof CommandHandler)
 				add((CommandHandler) sc);
 			return this;
@@ -1006,27 +1007,29 @@ public class BasicWebServerBuilder implements CommandDispatcher {
 	 *                              如果interrupted exception发生了
 	 */
 	public BasicWebServerBuilder serverHttps(int port) throws InterruptedException {
-		return serverHttps("0.0.0.0",port);
+		return serverHttps("0.0.0.0", port);
 	}
+
 	private static final UpgradeCodecFactory upgradeCodecFactory = new UpgradeCodecFactory() {
-        @Override
-        public UpgradeCodec newUpgradeCodec(CharSequence protocol) {
-            if (AsciiString.contentEquals(Http2CodecUtil.HTTP_UPGRADE_PROTOCOL_NAME, protocol)) {
-            	Http2Connection h2c=new DefaultHttp2Connection(true);
-            	Http2ConnectionEncoder h2e=new DefaultHttp2ConnectionEncoder(h2c,new DefaultHttp2FrameWriter());
-                return new Http2ServerUpgradeCodec(
-                		new Http2ConnectionHandlerBuilder()
-            			.codec(new DefaultHttp2ConnectionDecoder(h2c, h2e,new DefaultHttp2FrameReader()),h2e)
-            			.frameListener(new InboundHttp2ToHttpAdapterBuilder(h2c)
-            					.maxContentLength(1024*1024)
-            				.build()
-            			).build());
-            } else {
-                return null;
-            }
-        }
-};
-	public BasicWebServerBuilder serverHttps(String addr,int port) throws InterruptedException {
+		@SuppressWarnings("resource")
+		@Override
+		public UpgradeCodec newUpgradeCodec(CharSequence protocol) {
+			if (AsciiString.contentEquals(Http2CodecUtil.HTTP_UPGRADE_PROTOCOL_NAME, protocol)) {
+				Http2Connection h2c = new DefaultHttp2Connection(true);
+				Http2ConnectionEncoder h2e = new DefaultHttp2ConnectionEncoder(h2c, new DefaultHttp2FrameWriter());
+				return new Http2ServerUpgradeCodec(
+				        new Http2ConnectionHandlerBuilder()
+				                .codec(new DefaultHttp2ConnectionDecoder(h2c, h2e, new DefaultHttp2FrameReader()), h2e)
+				                .frameListener(new InboundHttp2ToHttpAdapterBuilder(h2c)
+				                        .maxContentLength(1024 * 1024)
+				                        .build()
+				                ).build());
+			}
+			return null;
+		}
+	};
+
+	public BasicWebServerBuilder serverHttps(String addr, int port) throws InterruptedException {
 		if (port == 0)
 			return this;
 		if (slc != null) {
@@ -1036,11 +1039,12 @@ public class BasicWebServerBuilder implements CommandDispatcher {
 				        @Override
 				        public void initChannel(SocketChannel ch) {
 					        SSLEngine engine = slc.newEngine(ch.alloc());
+					        engine.setEnabledProtocols(new String[] {"TLSv1.2"});
 					        ch.pipeline().addLast(new SslHandler(engine)).addLast(new HttpServerCodec())
-			                .addLast(new HttpContentCompressor()).addLast(new HttpServerKeepAliveHandler())
-			                .addLast(new LowestCatcher("HTTPS")).addLast(new HttpObjectAggregator(1024 * 1024))
-			                .addLast(new ChunkedWriteHandler()).addLast(new WebSocketServerCompressionHandler())
-			                .addLast(cbr);
+					                .addLast(new HttpContentCompressor()).addLast(new HttpServerKeepAliveHandler())
+					                .addLast(new LowestCatcher("HTTPS")).addLast(new HttpObjectAggregator(1024 * 1024))
+					                .addLast(new ChunkedWriteHandler()).addLast(new WebSocketServerCompressionHandler())
+					                .addLast(cbr);
 				        }
 			        }).bind(addr, port).sync().channel());
 		}
@@ -1059,9 +1063,10 @@ public class BasicWebServerBuilder implements CommandDispatcher {
 	 *                              如果interrupted exception发生了
 	 */
 	public BasicWebServerBuilder serverHttp(int port) throws InterruptedException {
-		return serverHttp("0.0.0.0",port);
+		return serverHttp("0.0.0.0", port);
 	}
-	public BasicWebServerBuilder serverHttp(String addr,int port) throws InterruptedException {
+
+	public BasicWebServerBuilder serverHttp(String addr, int port) throws InterruptedException {
 		if (port == 0)
 			return this;
 		NettyHandlerBridge cbr = new NettyHandlerBridge(bridge).setHttps(false);
@@ -1070,14 +1075,15 @@ public class BasicWebServerBuilder implements CommandDispatcher {
 			        @Override
 			        public void initChannel(SocketChannel ch) {
 				        ch.pipeline().addLast(new HttpServerCodec())
-		                .addLast(new HttpContentCompressor()).addLast(new HttpServerKeepAliveHandler())
-		                .addLast(new LowestCatcher("HTTPS")).addLast(new HttpObjectAggregator(1024 * 1024))
-		                .addLast(new ChunkedWriteHandler()).addLast(new WebSocketServerCompressionHandler())
-		                .addLast(cbr);
+				                .addLast(new HttpContentCompressor()).addLast(new HttpServerKeepAliveHandler())
+				                .addLast(new LowestCatcher("HTTP")).addLast(new HttpObjectAggregator(1024 * 1024))
+				                .addLast(new ChunkedWriteHandler()).addLast(new WebSocketServerCompressionHandler())
+				                .addLast(cbr);
 			        }
 		        }).bind(addr, port).sync().channel());
 		return this;
 	}
+
 	/**
 	 * Await servers closed.<br>
 	 * 等待服务器关闭

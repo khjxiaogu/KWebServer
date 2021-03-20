@@ -102,14 +102,14 @@ public class NettyHandlerBridge extends SimpleChannelInboundHandler<FullHttpRequ
 			response.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.CLOSE);
 		else if (request.protocolVersion().equals(HttpVersion.HTTP_1_0))
 			response.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
-		if(notFound!=null)
-		try (InputStream raf = new FileInputStream(notFound)) {
-			HttpUtil.setContentLength(response, raf.available());
-			response.content().capacity(raf.available());
-			response.content().writeBytes(raf, raf.available());
-		} catch (IOException ignore) {
+		if (notFound != null)
+			try (InputStream raf = new FileInputStream(notFound)) {
+				HttpUtil.setContentLength(response, raf.available());
+				response.content().capacity(raf.available());
+				response.content().writeBytes(raf, raf.available());
+			} catch (IOException ignore) {
 
-		}
+			}
 		ChannelFuture flushPromise = ctx.writeAndFlush(response);
 		if (!keepAlive)
 			flushPromise.addListener(ChannelFutureListener.CLOSE);

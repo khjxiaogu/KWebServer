@@ -41,12 +41,13 @@ public class ServiceClassWrapper extends URIMatchDispatchHandler {
 	        IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
 		this(ServiceClassWrapper.getClassFromJsonObject(Arg, cp));
 	}
+
 	private ServiceClass iobj;
 	private Map<String, ContextHandler<?>> paths = new HashMap<>();
 
 	public ServiceClassWrapper(ServiceClass object) throws InstantiationException, IllegalAccessException,
 	        IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
-		iobj=object;
+		iobj = object;
 		Class<?> clazz = object.getClass();
 		object.getLogger().info("正在载入...");
 		Map<String, Integer> meths = new HashMap<>();
@@ -259,16 +260,20 @@ class MethodAdaptProvider implements ServerProvider {
 	private ServiceClass objthis;
 	private InAdapter[] paramadap;
 	private OutAdapter resultadap;
+
 	@FunctionalInterface
-	interface AnnotationHandler{
+	interface AnnotationHandler {
 		InAdapter handle(Annotation anno) throws Exception;
 	}
-	private static Map<Class<? extends Annotation>,AnnotationHandler> handlers=new HashMap<>();
+
+	private static Map<Class<? extends Annotation>, AnnotationHandler> handlers = new HashMap<>();
 	static {
-		handlers.put(GetBy.class,anno->((GetBy)anno).value().getConstructor().newInstance());
-		handlers.put(GetByStr.class,anno->((GetByStr)anno).value().getConstructor(String.class).newInstance(((GetByStr)anno).param()));
-		handlers.put(Query.class,anno->new QueryValue(((Query)anno).value()));
+		handlers.put(GetBy.class, anno -> ((GetBy) anno).value().getConstructor().newInstance());
+		handlers.put(GetByStr.class,
+		        anno -> ((GetByStr) anno).value().getConstructor(String.class).newInstance(((GetByStr) anno).param()));
+		handlers.put(Query.class, anno -> new QueryValue(((Query) anno).value()));
 	}
+
 	public MethodAdaptProvider(Method met, ServiceClass objthis) throws InstantiationException, IllegalAccessException,
 	        IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
 		this.met = met;
@@ -278,9 +283,9 @@ class MethodAdaptProvider implements ServerProvider {
 		int i = 0;
 		for (Parameter param : met.getParameters()) {
 			Annotation[] annos = param.getAnnotations();
-			for(Annotation anno:annos) {
-				AnnotationHandler ah=handlers.get(anno.annotationType());
-				if(ah!=null)
+			for (Annotation anno : annos) {
+				AnnotationHandler ah = handlers.get(anno.annotationType());
+				if (ah != null)
 					try {
 						paramadap[i] = ah.handle(anno);
 					} catch (Exception e) {
@@ -309,12 +314,10 @@ class MethodAdaptProvider implements ServerProvider {
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace(objthis.getLogger());
-				objthis.getLogger().warning("error occured at "+objthis.getClass().getSimpleName()+"#"+met.getName());
-				StringBuilder type=new StringBuilder("types:");
-				for(Object o:params) {
-					type.append(o.getClass().getSimpleName());
-					type.append(",");
-				}
+				objthis.getLogger()
+				        .warning("error occured at " + objthis.getClass().getSimpleName() + "#" + met.getName());
+				StringBuilder type = new StringBuilder("types:");
+				for (Object o : params) { type.append(o.getClass().getSimpleName()); type.append(","); }
 				objthis.getLogger().warning(type);
 				if (!res.isWritten())
 					res.write(500, null, "Internal Server Error".getBytes(StandardCharsets.UTF_8));

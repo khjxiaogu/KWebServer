@@ -8,41 +8,44 @@ import java.util.Iterator;
 
 import com.khjxiaogu.dao.UpdateStatementBuilder.UpdateExpr;
 
-public class InsertStatementBuilder implements InputStatement<InsertStatementBuilder>{
-	class InsertExpr{
+public class InsertStatementBuilder implements InputStatement<InsertStatementBuilder> {
+	class InsertExpr {
 		String key;
 		Object data;
+
 		public InsertExpr(String key, Object data) {
 			this.key = key;
 			this.data = data;
 		}
 	}
+
 	String table;
 	Connection conn;
-	protected ArrayList<InsertExpr> inserts=new ArrayList<>();
+	protected ArrayList<InsertExpr> inserts = new ArrayList<>();
+
 	public InsertStatementBuilder(String table, Connection conn) {
 		this.table = table;
 		this.conn = conn;
 	}
+
 	@Override
 	public InsertStatementBuilder set(String key, Object val) { return null; }
+
 	public String getSQL() {
-		StringBuilder sql=new StringBuilder("INSERT INTO");
+		StringBuilder sql = new StringBuilder("INSERT INTO");
 		sql.append(table);
 		sql.append("(");
-		StringBuilder datas=new StringBuilder("(");
-		Iterator<InsertExpr> it=inserts.iterator();
-		if(it.hasNext())
-			while(true) {
-				InsertExpr expr=it.next();
-				if(expr.key!=null) {
-					sql.append(expr.key);
-				}
+		StringBuilder datas = new StringBuilder("(");
+		Iterator<InsertExpr> it = inserts.iterator();
+		if (it.hasNext())
+			while (true) {
+				InsertExpr expr = it.next();
+				if (expr.key != null) { sql.append(expr.key); }
 				datas.append("?");
-				if(it.hasNext()) {
+				if (it.hasNext()) {
 					sql.append(", ");
 					datas.append(",");
-				}else {
+				} else {
 					sql.append(") VALUES");
 					sql.append(datas.toString());
 					break;
@@ -50,14 +53,15 @@ public class InsertStatementBuilder implements InputStatement<InsertStatementBui
 			}
 		return sql.toString();
 	}
+
 	@Override
 	public boolean execute() {
 
-		try(PreparedStatement ps=conn.prepareStatement(getSQL())){
-			int len=inserts.size();
-			for(int i=0;i<len;i++)
-				ps.setObject(i,inserts.get(i).data);
-			return ps.executeUpdate()>0;
+		try (PreparedStatement ps = conn.prepareStatement(getSQL())) {
+			int len = inserts.size();
+			for (int i = 0; i < len; i++)
+				ps.setObject(i, inserts.get(i).data);
+			return ps.executeUpdate() > 0;
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

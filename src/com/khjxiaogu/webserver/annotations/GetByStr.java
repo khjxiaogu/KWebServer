@@ -14,5 +14,6 @@ import com.khjxiaogu.webserver.wrappers.inadapters.NopIn;
 @Target(PARAMETER)
 public @interface GetByStr {
 	public Class<? extends InStringAdapter> value() default NopIn.class;
+
 	public String param() default "";
 }

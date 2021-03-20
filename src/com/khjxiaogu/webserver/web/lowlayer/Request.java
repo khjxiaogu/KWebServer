@@ -129,9 +129,9 @@ public class Request {
 			path = path.substring(starts.length());
 	}
 
-	public Map<String, String> getQuery() { 
-		if(query!=null)
+	public Map<String, String> getQuery() {
+		if (query != null)
 			return query;
-		return query=Utils.queryToMap(queryString);
+		return query = Utils.queryToMap(queryString);
 	}
 }

@@ -51,6 +51,7 @@ public class UpdateStatementBuilder implements InputStatement<UpdateStatementBui
 		inserts.add(new UpdateExpr(key, val, expr));
 		return this;
 	}
+
 	@Override
 	public String getSQL() {
 		StringBuilder sql = new StringBuilder("UPDATE ");
@@ -69,6 +70,7 @@ public class UpdateStatementBuilder implements InputStatement<UpdateStatementBui
 			}
 		return sql.toString();
 	}
+
 	@Override
 	public boolean execute() {
 		try (PreparedStatement ps = conn.prepareStatement(getSQL())) {
@@ -82,6 +84,5 @@ public class UpdateStatementBuilder implements InputStatement<UpdateStatementBui
 		}
 		return false;
 	}
-
 
 }
