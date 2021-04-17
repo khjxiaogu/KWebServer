@@ -17,14 +17,15 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.khjxiaogu.webserver.annotations.Adapter;
+import com.khjxiaogu.webserver.annotations.Filter;
 import com.khjxiaogu.webserver.annotations.ForceProtocol;
+import com.khjxiaogu.webserver.annotations.GetAs;
 import com.khjxiaogu.webserver.annotations.GetBy;
 import com.khjxiaogu.webserver.annotations.GetByStr;
 import com.khjxiaogu.webserver.annotations.HttpMethod;
 import com.khjxiaogu.webserver.annotations.HttpPath;
+import com.khjxiaogu.webserver.annotations.PostQuery;
 import com.khjxiaogu.webserver.annotations.Query;
-import com.khjxiaogu.webserver.command.CommandHandler;
-import com.khjxiaogu.webserver.command.CommandSender;
 import com.khjxiaogu.webserver.web.CallBack;
 import com.khjxiaogu.webserver.web.ContextHandler;
 import com.khjxiaogu.webserver.web.ForceSecureHandler;
@@ -33,6 +34,9 @@ import com.khjxiaogu.webserver.web.MethodRestrictHandler;
 import com.khjxiaogu.webserver.web.ServerProvider;
 import com.khjxiaogu.webserver.web.ServiceClass;
 import com.khjxiaogu.webserver.web.URIMatchDispatchHandler;
+import com.khjxiaogu.webserver.web.lowlayer.Request;
+import com.khjxiaogu.webserver.web.lowlayer.Response;
+import com.khjxiaogu.webserver.wrappers.inadapters.PostQueryValue;
 import com.khjxiaogu.webserver.wrappers.inadapters.QueryValue;
 
 public class ServiceClassWrapper extends URIMatchDispatchHandler {
@@ -63,17 +67,24 @@ public class ServiceClassWrapper extends URIMatchDispatchHandler {
 		}
 		for (Method m : mets) {// do adding service
 			HttpPath[] annos = m.getAnnotationsByType(HttpPath.class);
+			Filter[] fannos=m.getAnnotationsByType(Filter.class);
 			if (annos.length == 0)
 				continue;
+			HttpFilter[] hf=null;
+			if(fannos.length!=0) {
+				hf=new HttpFilter[fannos.length];
+				for(int i=0;i<hf.length;i++)
+					hf[i]=FilterManager.getFilter(fannos[i].value());
+			}
 			object.getLogger().info("Patching Method:" + m.getName());
-			ServerProvider crn;
+			CallBack crn;
 			if (m.getAnnotation(Adapter.class) == null)
-				crn = new MethodServiceProvider(m, object);
+				crn = new MethodServiceProvider(m, object,hf);
 			else
-				crn = new MethodAdaptProvider(m, object);
+				crn = new MethodAdaptProvider(m, object,hf);
 			ForceProtocol prot = m.getAnnotation(ForceProtocol.class);
 			if (prot != null)
-				crn = new ForceSecureHandler(crn.getListener(), prot.value());
+				crn = new ForceSecureHandler(crn, prot.value()).getListener();
 			HttpMethod[] hms = m.getAnnotationsByType(HttpMethod.class);
 
 			for (HttpPath anno : annos) {
@@ -230,34 +241,61 @@ public class ServiceClassWrapper extends URIMatchDispatchHandler {
 
 }
 
-class MethodServiceProvider implements ServerProvider {
-	private Method met;
-	private ServiceClass objthis;
+class MethodServiceProvider implements CallBack {
+	protected Method met;
+	protected ServiceClass objthis;
+	protected HttpFilter[] filters;
 
-	public MethodServiceProvider(Method met, ServiceClass objthis) {
+	public MethodServiceProvider(Method met, ServiceClass objthis, HttpFilter[] filters) {
 		this.met = met;
 		met.setAccessible(true);
 		this.objthis = objthis;
+		this.filters = filters;
 	}
 
 	@Override
-	public CallBack getListener() {
-		return (req, res) -> {
-			try {
-				met.invoke(objthis, req, res);
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace(objthis.getLogger());
-				if (!res.isWritten())
-					res.write(500, null, "Internal Server Error".getBytes(StandardCharsets.UTF_8));
+	public void call(Request req, Response res) {
+		try {
+			if (doFilter(req, res))
+				processResults(req, res, met.invoke(objthis, processParameters(req, res)));
+		} catch (Exception e) {
+			exceptionHandler(req, res, e);
+		}
+	}
+
+	protected boolean doFilter(Request req, Response res) throws Exception {
+		if (filters != null) {
+			FilterChainIterator fc = new FilterChainIterator(filters);
+			while (fc.hasNext()) {
+				if (!fc.next(req, res))
+					return false;
 			}
-		};
+		}
+		return true;
+	}
+
+	protected Object[] processParameters(Request req, Response res) throws Exception {
+		return new Object[] { req, res };
+	}
+
+	/**
+	 * @param req
+	 * @param res
+	 * @param o
+	 */
+	protected void processResults(Request req, Response res, Object o) {}
+
+	/**
+	 * @param req
+	 */
+	protected void exceptionHandler(Request req, Response res, Exception e) {
+		e.printStackTrace(objthis.getLogger());
+		if (!res.isWritten())
+			res.write(500, null, "Internal Server Error".getBytes(StandardCharsets.UTF_8));
 	}
 }
 
-class MethodAdaptProvider implements ServerProvider {
-	private Method met;
-	private ServiceClass objthis;
+class MethodAdaptProvider extends MethodServiceProvider {
 	private InAdapter[] paramadap;
 	private OutAdapter resultadap;
 
@@ -272,13 +310,14 @@ class MethodAdaptProvider implements ServerProvider {
 		handlers.put(GetByStr.class,
 		        anno -> ((GetByStr) anno).value().getConstructor(String.class).newInstance(((GetByStr) anno).param()));
 		handlers.put(Query.class, anno -> new QueryValue(((Query) anno).value()));
+		handlers.put(GetAs.class,anno->InAdapterManager.getAdapter(((GetAs)anno).value()));
+		handlers.put(PostQuery.class,anno->new PostQueryValue(((PostQuery)anno).value()));
 	}
 
-	public MethodAdaptProvider(Method met, ServiceClass objthis) throws InstantiationException, IllegalAccessException,
+	public MethodAdaptProvider(Method met, ServiceClass objthis, HttpFilter[] filters)
+	        throws InstantiationException, IllegalAccessException,
 	        IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
-		this.met = met;
-		met.setAccessible(true);
-		this.objthis = objthis;
+		super(met, objthis, filters);
 		paramadap = new InAdapter[met.getParameterCount()];
 		int i = 0;
 		for (Parameter param : met.getParameters()) {
@@ -299,29 +338,26 @@ class MethodAdaptProvider implements ServerProvider {
 	}
 
 	@Override
-	public CallBack getListener() {
-		return (req, res) -> {
-			Object[] params = null;
-			try {
-				params = new Object[paramadap.length];
-				if (paramadap.length > 0)
-					for (int i = 0; i < paramadap.length; i++)
-						if (paramadap[i] != null)
-							params[i] = paramadap[i].handle(req);
-						else
-							params[i] = req;
-				resultadap.handle((ResultDTO) met.invoke(objthis, params), res);
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace(objthis.getLogger());
-				objthis.getLogger()
-				        .warning("error occured at " + objthis.getClass().getSimpleName() + "#" + met.getName());
-				StringBuilder type = new StringBuilder("types:");
-				for (Object o : params) { type.append(o.getClass().getSimpleName()); type.append(","); }
-				objthis.getLogger().warning(type);
-				if (!res.isWritten())
-					res.write(500, null, "Internal Server Error".getBytes(StandardCharsets.UTF_8));
-			}
-		};
+	protected void exceptionHandler(Request req, Response res, Exception e) {
+		e.printStackTrace(objthis.getLogger());
+		objthis.getLogger().warning("error occured at " + objthis.getClass().getSimpleName() + "#" + met.getName());
+		objthis.getLogger().warning(e.getMessage());
+		if (!res.isWritten())
+			res.write(500, null, "Internal Server Error".getBytes(StandardCharsets.UTF_8));
 	}
+
+	@Override
+	protected Object[] processParameters(Request req, Response res) throws Exception {
+		Object[] params = new Object[paramadap.length];
+		if (paramadap.length > 0)
+			for (int i = 0; i < paramadap.length; i++)
+				if (paramadap[i] != null)
+					params[i] = paramadap[i].handle(req);
+				else
+					params[i] = req;
+		return params;
+	}
+
+	@Override
+	protected void processResults(Request req, Response res, Object o) { resultadap.handle((ResultDTO) o, res); }
 }

@@ -5,6 +5,8 @@ package com.khjxiaogu.webserver.wrappers;
  * 
  * @author khjxiaogu file: InStringAdapter.java time: 2020年9月7日
  */
-public interface InStringAdapter extends InAdapter {
+public abstract class InStringAdapter implements InAdapter {
+	protected String key;
 
+	public InStringAdapter(String key) { this.key = key; }
 }

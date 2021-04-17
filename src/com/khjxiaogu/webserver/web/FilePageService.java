@@ -11,6 +11,7 @@ import java.util.TimeZone;
 import java.util.regex.Pattern;
 
 import com.khjxiaogu.webserver.loging.SystemLogger;
+import com.khjxiaogu.webserver.web.lowlayer.Request;
 import com.khjxiaogu.webserver.web.lowlayer.Response;
 
 import io.netty.handler.codec.http.HttpHeaders;
@@ -21,7 +22,7 @@ import io.netty.handler.codec.http.HttpHeaders;
  * 
  * @author: khjxiaogu file: FilePageService.java time: 2020年5月8日
  */
-public class FilePageService implements ServerProvider {
+public class FilePageService implements CallBack {
 
 	/**
 	 * The dest.<br />
@@ -55,29 +56,27 @@ public class FilePageService implements ServerProvider {
 	SystemLogger logger = new SystemLogger("页面");
 
 	@Override
-	public CallBack getListener() {
-		return (req, res) -> {
-			File f = new File(dest, FilePageService.sanitizeUri(req.getCurrentPath()));
-			try {
-				if (f.isDirectory())
-					f = new File(f, "index.html");
-				if (!f.exists())
-					return;
-				else if (isValid(f, req.headers, res))
-					res.write(304);
-				else
-					// res.setHeader(HttpHeaderNames.CONTENT_TYPE,);
-					res.write(200, f);
+	public void call(Request req,Response res) {
+		File f = new File(dest, FilePageService.sanitizeUri(req.getCurrentPath()));
+		try {
+			if (f.isDirectory())
+				f = new File(f, "index.html");
+			if (!f.exists())
+				return;
+			else if (isValid(f, req.getHeaders(), res))
+				res.write(304);
+			else
+				// res.setHeader(HttpHeaderNames.CONTENT_TYPE,);
+				res.write(200, f);
 
-			} catch (Exception ex) {
-				try {
-					res.write(500, ex.getMessage().getBytes("UTF-8"));
-				} catch (UnsupportedEncodingException e) {
-					e.printStackTrace(logger);
-				}
-				ex.printStackTrace(logger);
+		} catch (Exception ex) {
+			try {
+				res.write(500, ex.getMessage().getBytes("UTF-8"));
+			} catch (UnsupportedEncodingException e) {
+				e.printStackTrace(logger);
 			}
-		};
+			ex.printStackTrace(logger);
+		}
 	}
 
 	private boolean isValid(File file, HttpHeaders headers, Response res) throws ParseException {

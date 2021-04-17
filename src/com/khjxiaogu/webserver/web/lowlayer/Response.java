@@ -33,25 +33,23 @@ public class Response {
 	private final FullHttpRequest cor;
 	private final ChannelHandlerContext ex;
 	private HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
+	private boolean isSecure;
 
 	/**
 	 * Instantiates a new Response with a ChannelHandlerContext object.<br>
 	 * 使用一个ChannelHandlerContext新建一个Response类<br>
 	 *
 	 * @param t the t<br>
+	 * @param isSecure 
 	 */
-	Response(ChannelHandlerContext t, FullHttpRequest req) {
+	Response(ChannelHandlerContext t, boolean isSecure, FullHttpRequest req) {
 		this.cor = req;
 		ex = t;
-		response.headers().set("Strict-Transport-Security", "max-age=15556000");
+		this.isSecure=isSecure;
+		if(isSecure)
+			response.headers().set("Strict-Transport-Security", "max-age=15556000");
 		response.headers().set("Access-Control-Allow-Origin", "*");
 	}
-
-	/**
-	 * Do not set HSTS.<br>
-	 * 取消HSTS设置
-	 */
-	public void insecure() { response.headers().remove("Strict-Transport-Security"); }
 
 	/**
 	 * Write to response.<br>

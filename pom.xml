@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.khjxiaogu</groupId>
 	<artifactId>KWebServer</artifactId>
-	<version>0.0.1</version>
+	<version>0.0.2</version>
 	<name>kwebserver</name>
 	<build>
 		<finalName>${project.name}-${project.version}</finalName>

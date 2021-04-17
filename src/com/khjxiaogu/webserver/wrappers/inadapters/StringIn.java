@@ -12,7 +12,7 @@ public class StringIn implements InAdapter {
 
 	@Override
 	public Object handle(Request req) throws Exception {
-		return new String(Utils.readAll(req.body), StandardCharsets.UTF_8);
+		return new String(Utils.readAll(req.getBody()), StandardCharsets.UTF_8);
 	}
 
 }

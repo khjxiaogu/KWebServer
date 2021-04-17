@@ -6,7 +6,7 @@ package com.khjxiaogu.webserver.web;
  *
  * @author: khjxiaogu file: ContextHandler.java time: 2020年5月8日 提供规则匹配的调用器父类
  */
-public interface ContextHandler<T extends ContextHandler<T>> extends ServerProvider {
+public interface ContextHandler<T extends ContextHandler<T>> extends CallBack {
 
 	/**
 	 * 添加调用规则.<br />
@@ -15,7 +15,7 @@ public interface ContextHandler<T extends ContextHandler<T>> extends ServerProvi
 	 * @param ctx  调用<br />
 	 * @return 返回自身 <br />
 	 */
-	public abstract T createContext(String rule, CallBack ctx);
+	public T createContext(String rule, CallBack ctx);
 
 	/**
 	 * 添加调用规则.<br />

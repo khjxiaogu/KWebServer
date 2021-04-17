@@ -4,9 +4,12 @@ import com.khjxiaogu.webserver.web.lowlayer.Request;
 import com.khjxiaogu.webserver.web.lowlayer.Response;
 
 public interface FilterChain {
-	public void next(Request req, Response res);
+	public boolean next(Request req, Response res) throws Exception;
 
-	public void addFilter(Filter f);
 
-	public void ignoreFilter(Filter type);
+	public void ignore(HttpFilter type);
+
+	void addLast(HttpFilter f);
+
+	void add(HttpFilter f);
 }

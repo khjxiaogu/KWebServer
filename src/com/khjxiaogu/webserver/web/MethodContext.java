@@ -3,6 +3,9 @@ package com.khjxiaogu.webserver.web;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.khjxiaogu.webserver.web.lowlayer.Request;
+import com.khjxiaogu.webserver.web.lowlayer.Response;
+
 /**
  * Class MethodContext. 按照请求类型
  * 
@@ -76,21 +79,20 @@ public class MethodContext implements ContextHandler<MethodContext> {
 		return this;
 	}
 
-	@Override
-	public CallBack getListener() {
-		return (req, res) -> {
-			CallBack ctx = ctxs.get(req.method);
-			if (ctx != null) { ctx.call(req, res); return; }
-			if (defaultCallBack != null)
-				defaultCallBack.call(req, res);
-		};
-	}
 
 	@Override
 	public MethodContext removeContext(String rule) {
 		if (rule != null)
 			ctxs.remove(rule);
 		return this;
+	}
+
+	@Override
+	public void call(Request req, Response res) {
+		CallBack ctx = ctxs.get(req.getMethod());
+		if (ctx != null) { ctx.call(req, res); return; }
+		if (defaultCallBack != null)
+			defaultCallBack.call(req, res);
 	}
 
 }

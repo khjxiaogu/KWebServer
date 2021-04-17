@@ -3,7 +3,9 @@ package com.khjxiaogu.webserver.web;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.khjxiaogu.webserver.Patcher;
+import com.khjxiaogu.webserver.builder.Patcher;
+import com.khjxiaogu.webserver.web.lowlayer.Request;
+import com.khjxiaogu.webserver.web.lowlayer.Response;
 
 // TODO: Auto-generated Javadoc
 /**
@@ -35,24 +37,6 @@ public class URIMatchDispatchHandler implements ContextHandler<URIMatchDispatchH
 	public URIMatchDispatchHandler() {}
 
 	@Override
-	public CallBack getListener() {
-		return (req, res) -> {
-			if (req.getCurrentPath() == null) {
-				if (wildcard != null)
-					wildcard.call(req, res);
-				return;
-			}
-			for (CallBackContext hctx : ctxs)
-				if (req.getCurrentPath().startsWith(hctx.rule)) {
-					req.SkipPath(hctx.rule);
-					hctx.val.call(req, res);
-					return;
-				}
-			wildcard.call(req, res);
-		};
-	}
-
-	@Override
 	public URIMatchDispatchHandler createContext(String string, CallBack handler) {
 		if (string.equals("/"))
 			wildcard = handler;
@@ -76,5 +60,22 @@ public class URIMatchDispatchHandler implements ContextHandler<URIMatchDispatchH
 		for (CallBackContext ctx : ctxs)
 			site.createContext(ctx.rule, ctx.val);
 		return site;
+	}
+
+	@Override
+	public void call(Request req, Response res) {
+		if (req.getCurrentPath() == null) {
+			if (wildcard != null)
+				wildcard.call(req, res);
+			return;
+		}
+		for (CallBackContext hctx : ctxs)
+			if (req.getCurrentPath().startsWith(hctx.rule)) {
+				req.SkipPath(hctx.rule);
+				hctx.val.call(req, res);
+				return;
+			}
+		if (wildcard != null)
+			wildcard.call(req, res);
 	}
 }

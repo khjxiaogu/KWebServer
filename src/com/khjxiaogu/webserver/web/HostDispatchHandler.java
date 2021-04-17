@@ -3,6 +3,9 @@ package com.khjxiaogu.webserver.web;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.khjxiaogu.webserver.web.lowlayer.Request;
+import com.khjxiaogu.webserver.web.lowlayer.Response;
+
 import io.netty.handler.codec.http.HttpHeaderNames;
 
 // TODO: Auto-generated Javadoc
@@ -81,22 +84,20 @@ public class HostDispatchHandler implements ContextHandler<HostDispatchHandler> 
 	}
 
 	@Override
-	public CallBack getListener() {
-		return (req, res) -> {
-			String host = req.headers.get(HttpHeaderNames.HOST);
-			if (host != null)
-				for (CallBackContext hctx : ctxs)
-					if (host.startsWith(hctx.rule)) { hctx.val.call(req, res); return; }
-			if (defaultCallBack != null)
-				defaultCallBack.call(req, res);
-		};
-	}
-
-	@Override
 	public HostDispatchHandler removeContext(String rule) {
 		if (rule != null)
 			ctxs.removeIf(T -> T.rule.equals(rule));
 		return this;
+	}
+
+	@Override
+	public void call(Request req, Response res) {
+		String host = req.getHeaders().get(HttpHeaderNames.HOST);
+		if (host != null)
+			for (CallBackContext hctx : ctxs)
+				if (host.startsWith(hctx.rule)) { hctx.val.call(req, res); return; }
+		if (defaultCallBack != null)
+			defaultCallBack.call(req, res);
 	}
 
 }

@@ -16,18 +16,12 @@ public class Handler {
 	SystemLogger logger = new SystemLogger("包装层");
 
 	public boolean handle(ChannelHandlerContext ctx, boolean isSecure, FullHttpRequest fhr) throws IOException {
-		try {
-			URI requri = new URI(fhr.uri());
-
-			Request rq = new Request(fhr.headers(), fhr.method(), fhr.content(), requri, ctx.channel().remoteAddress(),
-			        isSecure);
-			Response r = new Response(ctx, fhr);
-			cb.call(rq, r);
-			return r.isWritten();
-		} catch (URISyntaxException e) {
-			logger.warning(e.getMessage());
-			return false;
-		}
+		/*Request rq = new Request(fhr.headers(), fhr.method(), fhr.content(), requri, ctx.channel().remoteAddress(),
+		        isSecure);*/
+		Request rq = new Request(ctx,isSecure,fhr);
+		Response r = new Response(ctx,isSecure,fhr);
+		cb.call(rq, r);
+		return r.isWritten();
 	}
 
 	public Handler(CallBack cb) { this.cb = cb; }

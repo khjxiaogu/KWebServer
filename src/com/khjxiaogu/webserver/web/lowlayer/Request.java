@@ -1,15 +1,23 @@
 package com.khjxiaogu.webserver.web.lowlayer;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.HashMap;
 import java.util.Map;
 
 import com.khjxiaogu.webserver.Utils;
+import com.khjxiaogu.webserver.loging.SystemLogger;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpHeaders;
-import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.multipart.Attribute;
+import io.netty.handler.codec.http.multipart.HttpPostRequestDecoder;
+import io.netty.handler.codec.http.multipart.InterfaceHttpData;
+import io.netty.handler.codec.http.multipart.InterfaceHttpData.HttpDataType;
 
 // TODO: Auto-generated Javadoc
 /**
@@ -18,36 +26,23 @@ import io.netty.handler.codec.http.HttpMethod;
  * @author khjxiaogu file: Request.java time: 2020年6月12日
  */
 public class Request {
-
-	/**
-	 * The http headers.<br>
-	 * 请求头.
-	 */
-	public final HttpHeaders headers;
-
-	/**
-	 * The http method.<br>
-	 * 请求方法.
-	 */
-	public final String method;
-
-	/**
-	 * The http body.<br>
-	 * 请求体.
-	 */
-	public final ByteBuf body;
-
+	private final static SystemLogger logger = new SystemLogger("请求解析");
 	/**
 	 * The http query(URL only).<br>
 	 * 请求参数（仅包含URL中的）.
 	 */
 	private Map<String, String> query;
+	/**
+	 * The http post.<br>
+	 * 请求参数.
+	 */
+	private Map<String, String> post;
 
 	/**
 	 * The full request path.<br>
 	 * 完整请求路径.
 	 */
-	public final String fullpath;
+	private String fullpath;
 	private String path;
 	private boolean isSecure;
 
@@ -68,18 +63,9 @@ public class Request {
 	 *         当前请求路径
 	 */
 	public String getCurrentPath() { return path; }
-
-	/**
-	 * The remote address.<br>
-	 * 远程地址.
-	 */
-	public final InetSocketAddress remote;
-
-	/**
-	 * The query string.<br>
-	 * 请求字符串.
-	 */
-	public final String queryString;
+	private ChannelHandlerContext ctx;
+	private FullHttpRequest fhr;
+	private URI uri;
 
 	/**
 	 * Instantiates a new Request.<br>
@@ -92,16 +78,24 @@ public class Request {
 	 * @param socketAddress the socket address<br>
 	 * @param isSecure      the is secure<br>
 	 */
-	Request(HttpHeaders httpHeaders, HttpMethod httpMethod, ByteBuf body, URI uri, SocketAddress socketAddress,
-	        boolean isSecure) {
-		super();
-		headers = httpHeaders;
+	Request(ChannelHandlerContext ctx, boolean isSecure, FullHttpRequest fhr) {
+		this.ctx=ctx;
+		this.fhr=fhr;
+		/*headers = httpHeaders;
 		method = httpMethod.toString();
 		this.body = body;
 		queryString = uri.getQuery();
 		path = uri.getPath();
 		fullpath = path;
-		remote = (InetSocketAddress) socketAddress;
+		remote = (InetSocketAddress) socketAddress;*/
+		try {
+			uri=new URI(fhr.uri());
+		} catch (URISyntaxException e) {
+			// TODO Auto-generated catch block
+			logger.warning(e.getMessage());
+		}
+		path = uri.getPath();
+		fullpath = path;
 		this.isSecure = isSecure;
 	}
 
@@ -132,6 +126,52 @@ public class Request {
 	public Map<String, String> getQuery() {
 		if (query != null)
 			return query;
-		return query = Utils.queryToMap(queryString);
+		return query = Utils.queryToMap(getQueryString());
+	}
+
+	public HttpHeaders getHeaders() {
+		return fhr.headers();
+	}
+
+	public String getMethod() { return fhr.method().toString(); }
+
+	public ByteBuf getBody() { return fhr.content(); }
+
+	public String getFullpath() { return fullpath; }
+
+	public InetSocketAddress getRemote() { return (InetSocketAddress)ctx.channel().remoteAddress(); }
+
+	public String getQueryString() { return uri.getQuery(); }
+	public HttpPostRequestDecoder getFullPost() {
+		return new HttpPostRequestDecoder(fhr);
+	}
+	public Map<String, String> getPost(){
+		if(post==null) {
+			post=new HashMap<>();
+			HttpPostRequestDecoder hpd=new HttpPostRequestDecoder(fhr);
+			while(hpd.hasNext()) {
+				InterfaceHttpData ihd=hpd.next();
+				if(ihd.getHttpDataType()==HttpDataType.Attribute) {
+					try {
+						post.put(ihd.getName(),((Attribute)ihd).getValue());
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						logger.warning(e.getMessage());
+					}
+				}
+			}
+		}
+		return post;
+	}
+	public Map<String,InterfaceHttpData> getPostMap(){
+		Map<String,InterfaceHttpData> postmap=new HashMap<>();
+		HttpPostRequestDecoder hpd=new HttpPostRequestDecoder(fhr);
+		while(hpd.hasNext()) {
+			InterfaceHttpData ihd=hpd.next();
+			if(ihd.getHttpDataType()==HttpDataType.Attribute) {
+				postmap.put(ihd.getName(),ihd);
+			}
+		}
+		return postmap;
 	}
 }

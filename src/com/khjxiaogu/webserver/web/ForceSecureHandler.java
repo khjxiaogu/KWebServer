@@ -41,8 +41,8 @@ public class ForceSecureHandler implements ServerProvider {
 		if (protocol.equals(Protocol.HTTPS))
 			return (req, res) -> {
 				if (!req.isSecure()) {
-					res.setHeader(HttpHeaderNames.LOCATION, "https://" + req.headers.get(HttpHeaderNames.HOST)
-					        + req.fullpath + (req.queryString != null ? "?" + req.queryString : ""));
+					res.setHeader(HttpHeaderNames.LOCATION, "https://" + req.getHeaders().get(HttpHeaderNames.HOST)
+					        + req.getFullpath() + (req.getQueryString() != null ? "?" + req.getQueryString() : ""));
 					res.write(302);
 					return;
 				}
@@ -50,10 +50,9 @@ public class ForceSecureHandler implements ServerProvider {
 			};
 		else if (protocol.equals(Protocol.HTTP))
 			return (req, res) -> {
-				res.insecure();
 				if (req.isSecure()) {
-					res.setHeader(HttpHeaderNames.LOCATION, "http://" + req.headers.get(HttpHeaderNames.HOST)
-					        + req.fullpath + (req.queryString != null ? "?" + req.queryString : ""));
+					res.setHeader(HttpHeaderNames.LOCATION, "http://" + req.getHeaders().get(HttpHeaderNames.HOST)
+					        + req.getFullpath() + (req.getQueryString() != null ? "?" + req.getQueryString() : ""));
 					res.write(302);
 					return;
 				}

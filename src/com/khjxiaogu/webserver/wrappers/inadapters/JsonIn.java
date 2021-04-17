@@ -13,6 +13,6 @@ public class JsonIn implements InAdapter {
 
 	@Override
 	public Object handle(Request req) throws JsonSyntaxException, IOException {
-		return JsonParser.parseString(new String(Utils.readAll(req.body), StandardCharsets.UTF_8));
+		return JsonParser.parseString(new String(Utils.readAll(req.getBody()), StandardCharsets.UTF_8));
 	}
 }
