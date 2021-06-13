@@ -43,7 +43,7 @@ public class WebServerPluginLoader {
 			loader = new WebServerPluginClassLoader(this, getClass().getClassLoader(), description.getAsJsonObject(),
 			        name, file);
 		} catch (IOException ignored) {}
-		this.loaders.add(loader);
+		loaders.add(loader);
 		return loader;
 	}
 
@@ -60,29 +60,31 @@ public class WebServerPluginLoader {
 		} catch (IOException ex) {
 			throw new RuntimeException(ex);
 		} finally {
-			if (jar != null)
+			if (jar != null) {
 				try {
 					jar.close();
 				} catch (IOException iOException) {}
-			if (stream != null)
+			}
+			if (stream != null) {
 				try {
 					stream.close();
 				} catch (IOException iOException) {}
+			}
 		}
 	}
 
-	public Pattern[] getPluginFileFilters() { return this.fileFilters.clone(); }
+	public Pattern[] getPluginFileFilters() { return fileFilters.clone(); }
 
 	Class<?> getClassByName(String name) { return getClassByName(name, null); }
 
 	Class<?> getClassByName(String name, WebServerPluginClassLoader requester) {
 		ReentrantReadWriteLock lock;
-		Class<?> cachedClass = this.classes.get(name);
+		Class<?> cachedClass = classes.get(name);
 		if (cachedClass != null)
 			return cachedClass;
-		synchronized (this.classLoadLock) {
-			lock = this.classLoadLock.computeIfAbsent(name, x -> new ReentrantReadWriteLock());
-			this.classLoadLockCount.compute(name, (x, prev) -> prev != null ? prev.intValue() + 1 : 1);
+		synchronized (classLoadLock) {
+			lock = classLoadLock.computeIfAbsent(name, x -> new ReentrantReadWriteLock());
+			classLoadLockCount.compute(name, (x, prev) -> prev != null ? prev.intValue() + 1 : 1);
 		}
 		lock.writeLock().lock();
 		try {
@@ -93,10 +95,10 @@ public class WebServerPluginLoader {
 				if (cachedClass != null)
 					return cachedClass;
 			}
-			cachedClass = this.classes.get(name);
+			cachedClass = classes.get(name);
 			if (cachedClass != null)
 				return cachedClass;
-			for (WebServerPluginClassLoader loader : this.loaders) {
+			for (WebServerPluginClassLoader loader : loaders) {
 				try {
 					cachedClass = loader.findClass(name, false);
 				} catch (ClassNotFoundException classNotFoundException) {}
@@ -104,35 +106,31 @@ public class WebServerPluginLoader {
 					return cachedClass;
 			}
 		} finally {
-			synchronized (this.classLoadLock) {
+			synchronized (classLoadLock) {
 				lock.writeLock().unlock();
-				if (this.classLoadLockCount.get(name).intValue() == 1) {
-					this.classLoadLock.remove(name);
-					this.classLoadLockCount.remove(name);
-				} else
-					this.classLoadLockCount.compute(name, (x, prev) -> prev.intValue() - 1);
+				if (classLoadLockCount.get(name).intValue() == 1) {
+					classLoadLock.remove(name);
+					classLoadLockCount.remove(name);
+				} else {
+					classLoadLockCount.compute(name, (x, prev) -> prev.intValue() - 1);
+				}
 			}
 		}
 		return null;
 	}
 
-	void setClass(String name, Class<?> clazz) {
-		if (!this.classes.containsKey(name))
-			this.classes.put(name, clazz);
-	}
+	void setClass(String name, Class<?> clazz) { if (!classes.containsKey(name)) { classes.put(name, clazz); } }
 
-	private void removeClass(String name) { this.classes.remove(name); }
+	private void removeClass(String name) { classes.remove(name); }
 
 	public void disablePlugin(WebServerPluginClassLoader plugin) { disablePlugin(plugin, false); }
 
 	public void disablePlugin(WebServerPluginClassLoader plugin, boolean closeClassloader) {
-		this.loaders.remove(plugin);
+		loaders.remove(plugin);
 		Set<String> names = plugin.getClasses();
-		for (String name : names)
-			removeClass(name);
+		for (String name : names) { removeClass(name); }
 		try {
-			if (closeClassloader)
-				plugin.close();
+			if (closeClassloader) { plugin.close(); }
 		} catch (IOException e) {}
 	}
 }

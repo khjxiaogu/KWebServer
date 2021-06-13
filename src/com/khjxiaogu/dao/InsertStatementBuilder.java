@@ -6,8 +6,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-import com.khjxiaogu.dao.UpdateStatementBuilder.UpdateExpr;
-
 public class InsertStatementBuilder implements InputStatement<InsertStatementBuilder> {
 	class InsertExpr {
 		String key;
@@ -31,13 +29,14 @@ public class InsertStatementBuilder implements InputStatement<InsertStatementBui
 	@Override
 	public InsertStatementBuilder set(String key, Object val) { return null; }
 
+	@Override
 	public String getSQL() {
 		StringBuilder sql = new StringBuilder("INSERT INTO");
 		sql.append(table);
 		sql.append("(");
 		StringBuilder datas = new StringBuilder("(");
 		Iterator<InsertExpr> it = inserts.iterator();
-		if (it.hasNext())
+		if (it.hasNext()) {
 			while (true) {
 				InsertExpr expr = it.next();
 				if (expr.key != null) { sql.append(expr.key); }
@@ -51,6 +50,7 @@ public class InsertStatementBuilder implements InputStatement<InsertStatementBui
 					break;
 				}
 			}
+		}
 		return sql.toString();
 	}
 
@@ -59,8 +59,7 @@ public class InsertStatementBuilder implements InputStatement<InsertStatementBui
 
 		try (PreparedStatement ps = conn.prepareStatement(getSQL())) {
 			int len = inserts.size();
-			for (int i = 0; i < len; i++)
-				ps.setObject(i, inserts.get(i).data);
+			for (int i = 0; i < len; i++) { ps.setObject(i, inserts.get(i).data); }
 			return ps.executeUpdate() > 0;
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block

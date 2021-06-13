@@ -12,9 +12,9 @@ public class JsonResultDTOOut implements OutAdapter {
 
 	@Override
 	public void handle(ResultDTO result, Response res) {
-		if (result.getHeaders() != null)
-			for (HHttpHeader hd : result.getHeaders())
-				res.setHeader(hd.key, hd.val);
+		if (result.getHeaders() != null) {
+			for (HHttpHeader hd : result.getHeaders()) { res.setHeader(hd.key, hd.val); }
+		}
 		res.write(result.code, new Gson().toJson(result.getBody()));
 	}
 

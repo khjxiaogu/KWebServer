@@ -24,23 +24,21 @@ public class WebsocketTracker extends SimpleChannelInboundHandler<WebSocketFrame
 		WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory(
 		        "wss://" + request.headers().get(HttpHeaderNames.HOST) + request.uri(), null, true);
 		WebSocketServerHandshaker handshaker = wsFactory.newHandshaker(request);
-		if (handshaker == null)
+		if (handshaker == null) {
 			WebSocketServerHandshakerFactory.sendUnsupportedVersionResponse(ctx.channel());
-		else {
+		} else {
 			ChannelFuture channelFuture = handshaker.handshake(ctx.channel(), request);
-			if (channelFuture.isSuccess())
-				ev.onOpen(ctx.channel(), request);
+			if (channelFuture.isSuccess()) { ev.onOpen(ctx.channel(), request); }
 		}
 	}
 
 	@Override
 	public void channelRead0(ChannelHandlerContext ctx, WebSocketFrame wsf) throws Exception {
-		if (wsf instanceof PingWebSocketFrame)
+		if (wsf instanceof PingWebSocketFrame) {
 			ctx.channel().writeAndFlush(new PongWebSocketFrame(wsf.content().retain()));
-		else if (wsf instanceof TextWebSocketFrame)
+		} else if (wsf instanceof TextWebSocketFrame) {
 			ev.onMessage(ctx.channel(), ((TextWebSocketFrame) wsf).text());
-		else if (wsf instanceof CloseWebSocketFrame)
-			ctx.channel().close();
+		} else if (wsf instanceof CloseWebSocketFrame) { ctx.channel().close(); }
 		return;
 	}
 

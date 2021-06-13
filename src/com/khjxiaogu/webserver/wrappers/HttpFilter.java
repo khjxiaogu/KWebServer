@@ -12,7 +12,7 @@ import com.khjxiaogu.webserver.web.lowlayer.Response;
 public interface HttpFilter {
 
 	/**
- 	 * Handle.<br>
+	 * Handle.<br>
 	 *
 	 * @param req the req<br>
 	 * @param res the res<br>

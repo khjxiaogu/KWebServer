@@ -42,11 +42,11 @@ class WebServerPluginClassLoader extends URLClassLoader {
 		super(new URL[] { f.toURI().toURL() }, cparent);
 		this.name = name;
 		this.loader = loader;
-		this.description = desc;
-		this.file = f;
-		this.jar = new JarFile(f);
-		this.manifest = this.jar.getManifest();
-		this.url = file.toURI().toURL();
+		description = desc;
+		file = f;
+		jar = new JarFile(f);
+		manifest = jar.getManifest();
+		url = file.toURI().toURL();
 	}
 
 	@Override
@@ -59,16 +59,15 @@ class WebServerPluginClassLoader extends URLClassLoader {
 	protected Class<?> findClass(String name) throws ClassNotFoundException { return findClass(name, true); }
 
 	Class<?> findClass(String name, boolean checkGlobal) throws ClassNotFoundException {
-		Class<?> result = this.classes.get(name);
+		Class<?> result = classes.get(name);
 		if (result == null) {
-			if (checkGlobal)
-				result = this.loader.getClassByName(name, this);
+			if (checkGlobal) { result = loader.getClassByName(name, this); }
 			if (result == null) {
 				byte[] classBytes;
 				String path = name.replace('.', '/').concat(".class");
-				JarEntry entry = this.jar.getJarEntry(path);
+				JarEntry entry = jar.getJarEntry(path);
 				if (entry != null) {
-					try (InputStream is = this.jar.getInputStream(entry)) {
+					try (InputStream is = jar.getInputStream(entry)) {
 						classBytes = Utils.readAll(is);
 					} catch (IOException ex) {
 						throw new ClassNotFoundException(name, ex);
@@ -76,26 +75,26 @@ class WebServerPluginClassLoader extends URLClassLoader {
 					int dot = name.lastIndexOf('.');
 					if (dot != -1) {
 						String pkgName = name.substring(0, dot);
-						if (getPackage(pkgName) == null)
+						if (getPackage(pkgName) == null) {
 							try {
-								if (this.manifest != null)
-									definePackage(pkgName, this.manifest, this.url);
-								else
+								if (manifest != null) {
+									definePackage(pkgName, manifest, url);
+								} else {
 									definePackage(pkgName, null, null, null, null, null, null, null);
+								}
 							} catch (IllegalArgumentException ex) {
 								if (getPackage(pkgName) == null)
 									throw new IllegalStateException("Cannot find package " + pkgName);
 							}
+						}
 					}
 					CodeSigner[] signers = entry.getCodeSigners();
-					CodeSource source = new CodeSource(this.url, signers);
+					CodeSource source = new CodeSource(url, signers);
 					result = defineClass(name, classBytes, 0, classBytes.length, source);
 				}
-				if (result == null)
-					result = super.findClass(name);
-				if (result != null)
-					this.loader.setClass(name, result);
-				this.classes.put(name, result);
+				if (result == null) { result = super.findClass(name); }
+				if (result != null) { loader.setClass(name, result); }
+				classes.put(name, result);
 			}
 		}
 		return result;
@@ -106,10 +105,10 @@ class WebServerPluginClassLoader extends URLClassLoader {
 		try {
 			super.close();
 		} finally {
-			this.jar.close();
+			jar.close();
 		}
 	}
 
-	Set<String> getClasses() { return this.classes.keySet(); }
+	Set<String> getClasses() { return classes.keySet(); }
 
 }

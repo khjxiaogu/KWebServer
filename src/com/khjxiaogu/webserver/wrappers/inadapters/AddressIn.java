@@ -1,9 +1,9 @@
 package com.khjxiaogu.webserver.wrappers.inadapters;
 
 import com.khjxiaogu.webserver.web.lowlayer.Request;
-import com.khjxiaogu.webserver.wrappers.InAdapter;
+import com.khjxiaogu.webserver.wrappers.StaticInAdapter;
 
-public class AddressIn implements InAdapter {
+public class AddressIn extends StaticInAdapter {
 
 	public AddressIn() {}
 

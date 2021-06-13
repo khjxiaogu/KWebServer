@@ -13,7 +13,7 @@ import com.khjxiaogu.webserver.web.lowlayer.Response;
  *
  * 如请求路径为 /foo/bar 监听方法有 1./bar 2./foo 3./ 会选用2号监听器并且设置请求路径为/bar
  * 设置的前后不影响判断顺序，优先判断长的规则
- * 
+ *
  * @author: khjxiaogu file: URIMatchDispatchHandler.java time: 2020年5月8日
  */
 public class URIMatchDispatchHandler implements ContextHandler<URIMatchDispatchHandler>, Patcher {
@@ -38,10 +38,11 @@ public class URIMatchDispatchHandler implements ContextHandler<URIMatchDispatchH
 
 	@Override
 	public URIMatchDispatchHandler createContext(String string, CallBack handler) {
-		if (string.equals("/"))
+		if (string.equals("/")) {
 			wildcard = handler;
-		else
+		} else {
 			ctxs.add(new CallBackContext(string, handler));
+		}
 		ctxs.sort((c1, c2) -> {
 		    return c2.rule.compareTo(c1.rule);
 		});
@@ -50,32 +51,25 @@ public class URIMatchDispatchHandler implements ContextHandler<URIMatchDispatchH
 
 	@Override
 	public URIMatchDispatchHandler removeContext(String rule) {
-		if (rule != null)
-			ctxs.removeIf(T -> T.rule.equals(rule));
+		if (rule != null) { ctxs.removeIf(T -> T.rule.equals(rule)); }
 		return this;
 	}
 
 	@Override
 	public <T extends ContextHandler<T>> T patchSite(T site) {
-		for (CallBackContext ctx : ctxs)
-			site.createContext(ctx.rule, ctx.val);
+		for (CallBackContext ctx : ctxs) { site.createContext(ctx.rule, ctx.val); }
 		return site;
 	}
 
 	@Override
 	public void call(Request req, Response res) {
-		if (req.getCurrentPath() == null) {
-			if (wildcard != null)
-				wildcard.call(req, res);
-			return;
-		}
+		if (req.getCurrentPath() == null) { if (wildcard != null) { wildcard.call(req, res); } return; }
 		for (CallBackContext hctx : ctxs)
 			if (req.getCurrentPath().startsWith(hctx.rule)) {
 				req.SkipPath(hctx.rule);
 				hctx.val.call(req, res);
 				return;
 			}
-		if (wildcard != null)
-			wildcard.call(req, res);
+		if (wildcard != null) { wildcard.call(req, res); }
 	}
 }

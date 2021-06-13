@@ -25,8 +25,7 @@ public final class Utils {
 		byte[] data = new byte[4096];
 
 		try {
-			while ((nRead = i.read(data, 0, data.length)) != -1)
-				ba.write(data, 0, nRead);
+			while ((nRead = i.read(data, 0, data.length)) != -1) { ba.write(data, 0, nRead); }
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			throw e;
@@ -66,10 +65,11 @@ public final class Utils {
 
 		for (String param : query.split("&")) {
 			String[] entry = param.split("=");
-			if (entry.length > 1)
+			if (entry.length > 1) {
 				result.put(entry[0], entry[1]);
-			else
+			} else {
 				result.put(entry[0], "");
+			}
 		}
 		return result;
 	}
@@ -81,10 +81,11 @@ public final class Utils {
 
 		for (String param : cookie.split(";")) {
 			String[] entry = param.split("=");
-			if (entry.length > 1)
+			if (entry.length > 1) {
 				result.put(entry[0].trim(), entry[1]);
-			else
+			} else {
 				result.put(entry[0].trim(), "");
+			}
 		}
 		return result;
 	}
@@ -95,8 +96,7 @@ public final class Utils {
 		StringBuffer hexString = new StringBuffer();
 		for (int i = 0; i < hash.length; i++) {
 			String hex = Integer.toHexString(0xff & hash[i]);
-			if (hex.length() == 1)
-				hexString.append('0');
+			if (hex.length() == 1) { hexString.append('0'); }
 			hexString.append(hex);
 		}
 		return hexString.toString();
@@ -125,13 +125,14 @@ public final class Utils {
 		String fn = f.getName();
 		String ext = fn.substring(fn.lastIndexOf('.') + 1);
 		String mime = Utils.extMap.get(ext);
-		if (mime == null)
+		if (mime == null) {
 			try {
 				mime = Files.probeContentType(f.toPath());
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+		}
 		return mime;
 
 	}

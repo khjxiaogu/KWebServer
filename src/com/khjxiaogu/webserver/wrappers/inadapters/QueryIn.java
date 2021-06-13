@@ -1,9 +1,9 @@
 package com.khjxiaogu.webserver.wrappers.inadapters;
 
 import com.khjxiaogu.webserver.web.lowlayer.Request;
-import com.khjxiaogu.webserver.wrappers.InAdapter;
+import com.khjxiaogu.webserver.wrappers.StaticInAdapter;
 
-public class QueryIn implements InAdapter {
+public class QueryIn extends StaticInAdapter {
 
 	public QueryIn() {}
 

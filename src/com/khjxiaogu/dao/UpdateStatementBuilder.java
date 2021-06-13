@@ -58,16 +58,18 @@ public class UpdateStatementBuilder implements InputStatement<UpdateStatementBui
 		sql.append(table);
 		sql.append(" SET ");
 		Iterator<UpdateExpr> it = inserts.iterator();
-		if (it.hasNext())
+		if (it.hasNext()) {
 			while (true) {
 				UpdateExpr expr = it.next();
 				if (expr.key != null) { sql.append(expr.key); sql.append(" = "); }
 				sql.append(expr.expr);
-				if (it.hasNext())
+				if (it.hasNext()) {
 					sql.append(", ");
-				else
+				} else {
 					break;
+				}
 			}
+		}
 		return sql.toString();
 	}
 
@@ -75,8 +77,7 @@ public class UpdateStatementBuilder implements InputStatement<UpdateStatementBui
 	public boolean execute() {
 		try (PreparedStatement ps = conn.prepareStatement(getSQL())) {
 			int len = inserts.size();
-			for (int i = 0; i < len; i++)
-				ps.setObject(i, inserts.get(i).val);
+			for (int i = 0; i < len; i++) { ps.setObject(i, inserts.get(i).val); }
 			return ps.executeUpdate() > 0;
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block

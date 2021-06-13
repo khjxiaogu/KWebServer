@@ -19,7 +19,7 @@ public interface RulableContext<T> {
 	 *         返回自身
 	 */
 	T forceHttp();
-	
+
 	/**
 	 * Add rule for this context.<br>
 	 * 为本上下文对象在父对象添加规则

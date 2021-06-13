@@ -8,7 +8,7 @@ import com.khjxiaogu.webserver.web.lowlayer.Response;
 
 /**
  * Class MethodContext. 按照请求类型
- * 
+ *
  * @author: khjxiaogu file: MethodContext.java time: 2020年5月8日
  */
 public class MethodContext implements ContextHandler<MethodContext> {
@@ -37,7 +37,7 @@ public class MethodContext implements ContextHandler<MethodContext> {
 	/**
 	 * Sets the default call back.<br />
 	 * 设置默认回调
-	 * 
+	 *
 	 * @param defaultCallBack the default call back<br />
 	 *                        默认回调
 	 * @return return self<br />
@@ -79,11 +79,9 @@ public class MethodContext implements ContextHandler<MethodContext> {
 		return this;
 	}
 
-
 	@Override
 	public MethodContext removeContext(String rule) {
-		if (rule != null)
-			ctxs.remove(rule);
+		if (rule != null) { ctxs.remove(rule); }
 		return this;
 	}
 
@@ -91,8 +89,7 @@ public class MethodContext implements ContextHandler<MethodContext> {
 	public void call(Request req, Response res) {
 		CallBack ctx = ctxs.get(req.getMethod());
 		if (ctx != null) { ctx.call(req, res); return; }
-		if (defaultCallBack != null)
-			defaultCallBack.call(req, res);
+		if (defaultCallBack != null) { defaultCallBack.call(req, res); }
 	}
 
 }

@@ -24,7 +24,7 @@ import com.khjxiaogu.webserver.web.lowlayer.Response;
  */
 public class ServerContext<T extends ContextHandler<T>, S extends ContextHandler<S>>
         implements XContext<T, S>, CommandDispatcher, RulableContext<ServerContext<T, S>>,
-        ExtendableContext<ServerContext<T, S>>,CallBack {
+        ExtendableContext<ServerContext<T, S>>, CallBack {
 	protected T Intern;
 	protected S sup;
 	protected CommandDispatcher command;
@@ -78,6 +78,7 @@ public class ServerContext<T extends ContextHandler<T>, S extends ContextHandler
 		sup.createContext(rule, this);
 		return this;
 	}
+
 	/**
 	 * Complete definition of current context.<br>
 	 * 完成此上下文的定义并返回父对象
@@ -134,9 +135,10 @@ public class ServerContext<T extends ContextHandler<T>, S extends ContextHandler
 		Intern.removeContext(rule);
 		return this;
 	}
+
 	@Override
 	public CommandDispatcher getDispatcher() { return command; }
 
 	@Override
-	public void call(Request req, Response res) {sec.call(req,res);}
+	public void call(Request req, Response res) { sec.call(req, res); }
 }

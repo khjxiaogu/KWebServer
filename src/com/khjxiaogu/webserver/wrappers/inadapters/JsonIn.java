@@ -7,9 +7,9 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import com.khjxiaogu.webserver.Utils;
 import com.khjxiaogu.webserver.web.lowlayer.Request;
-import com.khjxiaogu.webserver.wrappers.InAdapter;
+import com.khjxiaogu.webserver.wrappers.StaticInAdapter;
 
-public class JsonIn implements InAdapter {
+public class JsonIn extends StaticInAdapter {
 
 	@Override
 	public Object handle(Request req) throws JsonSyntaxException, IOException {

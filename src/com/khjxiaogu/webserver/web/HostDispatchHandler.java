@@ -11,7 +11,7 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 // TODO: Auto-generated Javadoc
 /**
  * Class HostDispatchHandler. 根据域名决定调用回调的处理器
- * 
+ *
  * @author: khjxiaogu file: HostDispatchHandler.java time: 2020年5月8日
  */
 public class HostDispatchHandler implements ContextHandler<HostDispatchHandler> {
@@ -39,7 +39,7 @@ public class HostDispatchHandler implements ContextHandler<HostDispatchHandler> 
 	/**
 	 * Sets the default call back.<br />
 	 * 设置默认回调
-	 * 
+	 *
 	 * @param defaultCallBack the default call back<br />
 	 *                        默认回调
 	 * @return return self <br />
@@ -76,28 +76,28 @@ public class HostDispatchHandler implements ContextHandler<HostDispatchHandler> 
 
 	@Override
 	public HostDispatchHandler createContext(String rule, CallBack ctx) {
-		if (rule.length() == 0)
+		if (rule.length() == 0) {
 			defaultCallBack = ctx;
-		else
+		} else {
 			ctxs.add(new CallBackContext(rule, ctx));
+		}
 		return this;
 	}
 
 	@Override
 	public HostDispatchHandler removeContext(String rule) {
-		if (rule != null)
-			ctxs.removeIf(T -> T.rule.equals(rule));
+		if (rule != null) { ctxs.removeIf(T -> T.rule.equals(rule)); }
 		return this;
 	}
 
 	@Override
 	public void call(Request req, Response res) {
 		String host = req.getHeaders().get(HttpHeaderNames.HOST);
-		if (host != null)
+		if (host != null) {
 			for (CallBackContext hctx : ctxs)
 				if (host.startsWith(hctx.rule)) { hctx.val.call(req, res); return; }
-		if (defaultCallBack != null)
-			defaultCallBack.call(req, res);
+		}
+		if (defaultCallBack != null) { defaultCallBack.call(req, res); }
 	}
 
 }

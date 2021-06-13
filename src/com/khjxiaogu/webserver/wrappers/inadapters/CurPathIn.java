@@ -1,9 +1,9 @@
 package com.khjxiaogu.webserver.wrappers.inadapters;
 
 import com.khjxiaogu.webserver.web.lowlayer.Request;
-import com.khjxiaogu.webserver.wrappers.InAdapter;
+import com.khjxiaogu.webserver.wrappers.StaticInAdapter;
 
-public class CurPathIn implements InAdapter {
+public class CurPathIn extends StaticInAdapter {
 
 	public CurPathIn() {}
 

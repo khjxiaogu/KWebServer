@@ -10,6 +10,7 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidParameterException;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
 
 import com.google.gson.JsonArray;
@@ -18,10 +19,12 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.khjxiaogu.webserver.annotations.Adapter;
 import com.khjxiaogu.webserver.annotations.Filter;
+import com.khjxiaogu.webserver.annotations.FilterClass;
 import com.khjxiaogu.webserver.annotations.ForceProtocol;
 import com.khjxiaogu.webserver.annotations.GetAs;
 import com.khjxiaogu.webserver.annotations.GetBy;
 import com.khjxiaogu.webserver.annotations.GetByStr;
+import com.khjxiaogu.webserver.annotations.Header;
 import com.khjxiaogu.webserver.annotations.HttpMethod;
 import com.khjxiaogu.webserver.annotations.HttpPath;
 import com.khjxiaogu.webserver.annotations.PostQuery;
@@ -31,11 +34,11 @@ import com.khjxiaogu.webserver.web.ContextHandler;
 import com.khjxiaogu.webserver.web.ForceSecureHandler;
 import com.khjxiaogu.webserver.web.MethodContext;
 import com.khjxiaogu.webserver.web.MethodRestrictHandler;
-import com.khjxiaogu.webserver.web.ServerProvider;
 import com.khjxiaogu.webserver.web.ServiceClass;
 import com.khjxiaogu.webserver.web.URIMatchDispatchHandler;
 import com.khjxiaogu.webserver.web.lowlayer.Request;
 import com.khjxiaogu.webserver.web.lowlayer.Response;
+import com.khjxiaogu.webserver.wrappers.inadapters.HeaderValue;
 import com.khjxiaogu.webserver.wrappers.inadapters.PostQueryValue;
 import com.khjxiaogu.webserver.wrappers.inadapters.QueryValue;
 
@@ -58,8 +61,7 @@ public class ServiceClassWrapper extends URIMatchDispatchHandler {
 		Method[] mets = clazz.getDeclaredMethods();
 		for (Method m : mets) {// check if method dispatch needed
 			HttpPath[] annos = m.getAnnotationsByType(HttpPath.class);
-			if (annos.length == 0)
-				continue;
+			if (annos.length == 0) { continue; }
 			for (HttpPath anno : annos) {
 				int ia = meths.getOrDefault(anno.value(), 0) + 1;
 				meths.put(anno.value(), ia);
@@ -67,24 +69,26 @@ public class ServiceClassWrapper extends URIMatchDispatchHandler {
 		}
 		for (Method m : mets) {// do adding service
 			HttpPath[] annos = m.getAnnotationsByType(HttpPath.class);
-			Filter[] fannos=m.getAnnotationsByType(Filter.class);
-			if (annos.length == 0)
-				continue;
-			HttpFilter[] hf=null;
-			if(fannos.length!=0) {
-				hf=new HttpFilter[fannos.length];
-				for(int i=0;i<hf.length;i++)
-					hf[i]=FilterManager.getFilter(fannos[i].value());
+			Filter[] fannos = m.getAnnotationsByType(Filter.class);
+			FilterClass[] fcannos=m.getAnnotationsByType(FilterClass.class);
+			if (annos.length == 0) { continue; }
+			LinkedList<HttpFilter> hfs = new LinkedList<>();
+			for (Filter fc:fannos) { 
+				hfs.add(FilterManager.getFilter(fc.value())); 
 			}
+			for (FilterClass fc:fcannos) { 
+				hfs.add(fc.value().getConstructor().newInstance()); 
+			}
+			HttpFilter[] hf=hfs.toArray(new HttpFilter[0]);
 			object.getLogger().info("Patching Method:" + m.getName());
 			CallBack crn;
-			if (m.getAnnotation(Adapter.class) == null)
-				crn = new MethodServiceProvider(m, object,hf);
-			else
-				crn = new MethodAdaptProvider(m, object,hf);
+			if (m.getAnnotation(Adapter.class) == null) {
+				crn = new MethodServiceProvider(m, object, hf);
+			} else {
+				crn = new MethodAdaptProvider(m, object, hf);
+			}
 			ForceProtocol prot = m.getAnnotation(ForceProtocol.class);
-			if (prot != null)
-				crn = new ForceSecureHandler(crn, prot.value()).getListener();
+			if (prot != null) { crn = new ForceSecureHandler(crn, prot.value()).getListener(); }
 			HttpMethod[] hms = m.getAnnotationsByType(HttpMethod.class);
 
 			for (HttpPath anno : annos) {
@@ -92,8 +96,7 @@ public class ServiceClassWrapper extends URIMatchDispatchHandler {
 				if (ia == 1) {
 					if (hms.length > 0) {
 						MethodRestrictHandler mrh = new MethodRestrictHandler(crn);
-						for (HttpMethod met : hms)
-							mrh.addMethod(met.value());
+						for (HttpMethod met : hms) { mrh.addMethod(met.value()); }
 						crn = mrh;
 					}
 					this.createContext(anno.value(), crn);
@@ -104,8 +107,7 @@ public class ServiceClassWrapper extends URIMatchDispatchHandler {
 						this.createContext(anno.value(), ctxh);
 						paths.put(anno.value(), ctxh);
 					}
-					for (HttpMethod met : hms)
-						ctxh.createContext(met.value(), crn);
+					for (HttpMethod met : hms) { ctxh.createContext(met.value(), crn); }
 
 				}
 			}
@@ -123,9 +125,9 @@ public class ServiceClassWrapper extends URIMatchDispatchHandler {
 		Class<?> clazz = cl.forName(jo.get("class").getAsString());
 		JsonArray ja = null;
 		JsonElement je = jo.get("args");
-		if (je == null) {} else if (je.isJsonArray())
+		if (je == null) {} else if (je.isJsonArray()) {
 			ja = je.getAsJsonArray();
-		else if (!je.isJsonNull()) { ja = new JsonArray(); ja.add(je); }
+		} else if (!je.isJsonNull()) { ja = new JsonArray(); ja.add(je); }
 		return ServiceClassWrapper.initObjectWithJsonArray(ja, clazz, cl);
 	}
 
@@ -142,10 +144,10 @@ public class ServiceClassWrapper extends URIMatchDispatchHandler {
 					boolean canuse = true;
 					for (int i = 0; i < Args.size(); i++)
 						if (!ServiceClassWrapper.JsonTypeEquals(Args.get(i), pms[i], cl)) { canuse = false; break; }
-					if (!canuse)
-						continue;
-					for (int i = 0; i < Args.size(); i++)
+					if (!canuse) { continue; }
+					for (int i = 0; i < Args.size(); i++) {
 						params[i] = ServiceClassWrapper.CastJsonElement(Args.get(i), pms[i], cl);
+					}
 					ctor.setAccessible(true);
 					return (T) ctor.newInstance(params);
 				}
@@ -230,8 +232,9 @@ public class ServiceClassWrapper extends URIMatchDispatchHandler {
 				throw new InvalidParameterException(je.getClass() + " cannot be convert to " + clazz.getSimpleName());
 			JsonArray ja = je.getAsJsonArray();
 			Object[] objs = new Object[ja.size()];
-			for (int i = 0; i < ja.size(); i++)
+			for (int i = 0; i < ja.size(); i++) {
 				objs[i] = ServiceClassWrapper.CastJsonElement(ja.get(i), clazz.getComponentType(), cl);
+			}
 		} else if (je.isJsonNull()) {} else
 			throw new InvalidParameterException(je.getClass() + " cannot be convert to " + clazz.getSimpleName());
 		return null;
@@ -256,8 +259,7 @@ class MethodServiceProvider implements CallBack {
 	@Override
 	public void call(Request req, Response res) {
 		try {
-			if (doFilter(req, res))
-				processResults(req, res, met.invoke(objthis, processParameters(req, res)));
+			if (doFilter(req, res)) { processResults(req, res, met.invoke(objthis, processParameters(req, res))); }
 		} catch (Exception e) {
 			exceptionHandler(req, res, e);
 		}
@@ -265,7 +267,7 @@ class MethodServiceProvider implements CallBack {
 
 	protected boolean doFilter(Request req, Response res) throws Exception {
 		if (filters != null) {
-			FilterChainIterator fc = new FilterChainIterator(filters);
+			FilterChainIterator fc = new FilterChainIterator(filters, objthis);
 			while (fc.hasNext()) {
 				if (!fc.next(req, res))
 					return false;
@@ -290,8 +292,7 @@ class MethodServiceProvider implements CallBack {
 	 */
 	protected void exceptionHandler(Request req, Response res, Exception e) {
 		e.printStackTrace(objthis.getLogger());
-		if (!res.isWritten())
-			res.write(500, null, "Internal Server Error".getBytes(StandardCharsets.UTF_8));
+		if (!res.isWritten()) { res.write(500, null, "Internal Server Error".getBytes(StandardCharsets.UTF_8)); }
 	}
 }
 
@@ -306,14 +307,14 @@ class MethodAdaptProvider extends MethodServiceProvider {
 
 	private static Map<Class<? extends Annotation>, AnnotationHandler> handlers = new HashMap<>();
 	static {
-		handlers.put(GetBy.class, anno -> ((GetBy) anno).value().getConstructor().newInstance());
-		handlers.put(GetByStr.class,
+		MethodAdaptProvider.handlers.put(GetBy.class, anno -> ((GetBy) anno).value().getConstructor().newInstance());
+		MethodAdaptProvider.handlers.put(GetByStr.class,
 		        anno -> ((GetByStr) anno).value().getConstructor(String.class).newInstance(((GetByStr) anno).param()));
-		handlers.put(Query.class, anno -> new QueryValue(((Query) anno).value()));
-		handlers.put(GetAs.class,anno->InAdapterManager.getAdapter(((GetAs)anno).value()));
-		handlers.put(PostQuery.class,anno->new PostQueryValue(((PostQuery)anno).value()));
+		MethodAdaptProvider.handlers.put(Query.class, anno -> new QueryValue(((Query) anno).value()));
+		MethodAdaptProvider.handlers.put(GetAs.class, anno -> InAdapterManager.getAdapter(((GetAs) anno).value()));
+		MethodAdaptProvider.handlers.put(PostQuery.class, anno -> new PostQueryValue(((PostQuery) anno).value()));
+		MethodAdaptProvider.handlers.put(Header.class, anno -> new HeaderValue(((Header) anno).value()));
 	}
-
 	public MethodAdaptProvider(Method met, ServiceClass objthis, HttpFilter[] filters)
 	        throws InstantiationException, IllegalAccessException,
 	        IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
@@ -323,14 +324,15 @@ class MethodAdaptProvider extends MethodServiceProvider {
 		for (Parameter param : met.getParameters()) {
 			Annotation[] annos = param.getAnnotations();
 			for (Annotation anno : annos) {
-				AnnotationHandler ah = handlers.get(anno.annotationType());
-				if (ah != null)
+				AnnotationHandler ah = MethodAdaptProvider.handlers.get(anno.annotationType());
+				if (ah != null) {
 					try {
 						paramadap[i] = ah.handle(anno);
 					} catch (Exception e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
+				}
 			}
 			i++;
 		}
@@ -342,19 +344,25 @@ class MethodAdaptProvider extends MethodServiceProvider {
 		e.printStackTrace(objthis.getLogger());
 		objthis.getLogger().warning("error occured at " + objthis.getClass().getSimpleName() + "#" + met.getName());
 		objthis.getLogger().warning(e.getMessage());
-		if (!res.isWritten())
-			res.write(500, null, "Internal Server Error".getBytes(StandardCharsets.UTF_8));
+		if (!res.isWritten()) { res.write(500, null, "Internal Server Error".getBytes(StandardCharsets.UTF_8)); }
 	}
 
 	@Override
 	protected Object[] processParameters(Request req, Response res) throws Exception {
 		Object[] params = new Object[paramadap.length];
-		if (paramadap.length > 0)
+		if (paramadap.length > 0) {
 			for (int i = 0; i < paramadap.length; i++)
-				if (paramadap[i] != null)
-					params[i] = paramadap[i].handle(req);
-				else
+				if (paramadap[i] != null) {
+					try {
+					params[i] = paramadap[i].handle(req, objthis);
+					}catch(Exception e){
+						objthis.getLogger().error("error when processing param "+i);
+						throw e;
+					}
+				} else {
 					params[i] = req;
+				}
+		}
 		return params;
 	}
 

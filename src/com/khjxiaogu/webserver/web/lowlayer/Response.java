@@ -25,7 +25,7 @@ import io.netty.handler.stream.ChunkedFile;
 // TODO: Auto-generated Javadoc
 /**
  * Class Response. 回复体
- * 
+ *
  * @author khjxiaogu file: Response.java time: 2020年6月12日
  */
 public class Response {
@@ -39,22 +39,21 @@ public class Response {
 	 * Instantiates a new Response with a ChannelHandlerContext object.<br>
 	 * 使用一个ChannelHandlerContext新建一个Response类<br>
 	 *
-	 * @param t the t<br>
-	 * @param isSecure 
+	 * @param t        the t<br>
+	 * @param isSecure
 	 */
 	Response(ChannelHandlerContext t, boolean isSecure, FullHttpRequest req) {
-		this.cor = req;
+		cor = req;
 		ex = t;
-		this.isSecure=isSecure;
-		if(isSecure)
-			response.headers().set("Strict-Transport-Security", "max-age=15556000");
+		this.isSecure = isSecure;
+		if (isSecure) { response.headers().set("Strict-Transport-Security", "max-age=15556000"); }
 		response.headers().set("Access-Control-Allow-Origin", "*");
 	}
 
 	/**
 	 * Write to response.<br>
 	 * 回复
-	 * 
+	 *
 	 * @param status  the http status code<br>
 	 *                http回复码
 	 * @param queries the response headers, can be null<br>
@@ -63,24 +62,27 @@ public class Response {
 	 *                回复体
 	 */
 	public void write(int status, Map<String, String> queries, byte[] content) {
-		if (queries != null)
-			for (Map.Entry<String, String> query : queries.entrySet())
+		if (queries != null) {
+			for (Map.Entry<String, String> query : queries.entrySet()) {
 				response.headers().set(query.getKey(), query.getValue());
+			}
+		}
 		write(status, content);
 	}
 
 	/**
 	 * Write to response.<br>
 	 * 回复
-	 * 
+	 *
 	 * @param status  the http status code<br>
 	 *                http回复码
 	 * @param content the response content<br>
 	 *                回复体
 	 */
 	public void write(int status, String content) {
-		if (response.headers().get(HttpHeaderNames.CONTENT_TYPE) == null)
+		if (response.headers().get(HttpHeaderNames.CONTENT_TYPE) == null) {
 			response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html; charset=UTF-8");
+		}
 		response.setStatus(HttpResponseStatus.valueOf(status));
 
 		HttpUtil.setContentLength(response, content.length());
@@ -93,15 +95,16 @@ public class Response {
 	/**
 	 * Write to response.<br>
 	 * 回复
-	 * 
+	 *
 	 * @param status  the http status code<br>
 	 *                http回复码
 	 * @param content the response content<br>
 	 *                回复体
 	 */
 	public void write(int status, byte[] content) {
-		if (response.headers().get(HttpHeaderNames.CONTENT_TYPE) == null)
+		if (response.headers().get(HttpHeaderNames.CONTENT_TYPE) == null) {
 			response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html; charset=UTF-8");
+		}
 		response.setStatus(HttpResponseStatus.valueOf(status));
 		HttpUtil.setContentLength(response, content.length);
 		ex.write(response);
@@ -112,23 +115,25 @@ public class Response {
 	/**
 	 * Write to response.<br>
 	 * 回复
-	 * 
+	 *
 	 * @param status  the http status code<br>
 	 *                http回复码
 	 * @param queries the response headers, can be null<br>
 	 *                回复头，可以为null
 	 */
 	public void write(int status, Map<String, String> queries) {
-		if (queries != null)
-			for (Map.Entry<String, String> query : queries.entrySet())
+		if (queries != null) {
+			for (Map.Entry<String, String> query : queries.entrySet()) {
 				response.headers().set(query.getKey(), query.getValue());
+			}
+		}
 		write(status);
 	}
 
 	/**
 	 * Write to response.<br>
 	 * 回复
-	 * 
+	 *
 	 * @param status  the http status code<br>
 	 *                http回复码
 	 * @param queries the response headers, can be null<br>
@@ -145,7 +150,7 @@ public class Response {
 	/**
 	 * Set header.<br>
 	 * 设置回复头值
-	 * 
+	 *
 	 * @param key the key<br>
 	 *            回复头名称
 	 * @param val the value<br>
@@ -156,7 +161,7 @@ public class Response {
 	/**
 	 * Write a file to response.<br>
 	 * 回复一个文件
-	 * 
+	 *
 	 * @param status  the status<br>
 	 *                http回复码
 	 * @param queries the response headers, can be null<br>
@@ -165,9 +170,11 @@ public class Response {
 	 *                文件
 	 */
 	public void write(int status, Map<String, String> queries, File f) {
-		if (queries != null)
-			for (Map.Entry<String, String> query : queries.entrySet())
+		if (queries != null) {
+			for (Map.Entry<String, String> query : queries.entrySet()) {
 				response.headers().set(query.getKey(), query.getValue());
+			}
+		}
 		write(status, f);
 
 	}
@@ -175,7 +182,7 @@ public class Response {
 	/**
 	 * Write a file to response.<br>
 	 * 回复一个文件
-	 * 
+	 *
 	 * @param status the status<br>
 	 *               http回复码
 	 * @param f      the file<br>
@@ -213,8 +220,7 @@ public class Response {
 			HttpUtil.setContentLength(response, raf.length());
 			if (response.headers().get(HttpHeaderNames.CONTENT_TYPE) == null) {
 				String mime = Utils.getMime(f);
-				if (mime != null)
-					response.headers().set(HttpHeaderNames.CONTENT_TYPE, mime);
+				if (mime != null) { response.headers().set(HttpHeaderNames.CONTENT_TYPE, mime); }
 			}
 			if (raf.length() > 102400) {
 				response.headers().set(HttpHeaderNames.CONTENT_ENCODING, "chunked");

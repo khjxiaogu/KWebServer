@@ -19,7 +19,7 @@ import io.netty.handler.codec.http.HttpHeaders;
 // TODO: Auto-generated Javadoc
 /**
  * Class FilePageService. 文件系统页面服务，根据文件路径发送网页 /将自动导向到当前目录下/index.html
- * 
+ *
  * @author: khjxiaogu file: FilePageService.java time: 2020年5月8日
  */
 public class FilePageService implements CallBack {
@@ -44,7 +44,7 @@ public class FilePageService implements CallBack {
 	 *             根目录
 	 */
 	public FilePageService(File root) {
-		this.dest = root;
+		dest = root;
 		format.setTimeZone(TimeZone.getTimeZone("GMT"));
 		format.setDateFormatSymbols(DateFormatSymbols.getInstance(Locale.ENGLISH));
 	}
@@ -56,18 +56,18 @@ public class FilePageService implements CallBack {
 	SystemLogger logger = new SystemLogger("页面");
 
 	@Override
-	public void call(Request req,Response res) {
+	public void call(Request req, Response res) {
 		File f = new File(dest, FilePageService.sanitizeUri(req.getCurrentPath()));
 		try {
-			if (f.isDirectory())
-				f = new File(f, "index.html");
+			if (f.isDirectory()) { f = new File(f, "index.html"); }
 			if (!f.exists())
 				return;
-			else if (isValid(f, req.getHeaders(), res))
+			else if (isValid(f, req.getHeaders(), res)) {
 				res.write(304);
-			else
+			} else {
 				// res.setHeader(HttpHeaderNames.CONTENT_TYPE,);
 				res.write(200, f);
+			}
 
 		} catch (Exception ex) {
 			try {
@@ -83,8 +83,7 @@ public class FilePageService implements CallBack {
 		res.setHeader("Cache-Control", "public,max-age=10,must-revalidate");
 		long lmf = file.lastModified();
 		Date lmd = new Date();
-		if (lmf > 0)
-			lmd.setTime(lmf);
+		if (lmf > 0) { lmd.setTime(lmf); }
 		synchronized (format) {
 			res.setHeader("Last-Modified", format.format(lmd));
 			if (headers.get("If-Modified-Since") == null
@@ -103,7 +102,7 @@ public class FilePageService implements CallBack {
 	/**
 	 * Sanitize uri.<br />
 	 * 清理并安全化URI，转为操作系统相关URI
-	 * 
+	 *
 	 * @param uri the uri<br />
 	 * @return return sanitized uri <br />
 	 *         返回 string

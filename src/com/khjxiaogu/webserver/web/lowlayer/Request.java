@@ -5,6 +5,7 @@ import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.khjxiaogu.webserver.Utils;
@@ -15,6 +16,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.multipart.Attribute;
+import io.netty.handler.codec.http.multipart.DefaultHttpDataFactory;
 import io.netty.handler.codec.http.multipart.HttpPostRequestDecoder;
 import io.netty.handler.codec.http.multipart.InterfaceHttpData;
 import io.netty.handler.codec.http.multipart.InterfaceHttpData.HttpDataType;
@@ -63,6 +65,7 @@ public class Request {
 	 *         当前请求路径
 	 */
 	public String getCurrentPath() { return path; }
+
 	private ChannelHandlerContext ctx;
 	private FullHttpRequest fhr;
 	private URI uri;
@@ -79,20 +82,18 @@ public class Request {
 	 * @param isSecure      the is secure<br>
 	 */
 	Request(ChannelHandlerContext ctx, boolean isSecure, FullHttpRequest fhr) {
-		this.ctx=ctx;
-		this.fhr=fhr;
-		/*headers = httpHeaders;
-		method = httpMethod.toString();
-		this.body = body;
-		queryString = uri.getQuery();
-		path = uri.getPath();
-		fullpath = path;
-		remote = (InetSocketAddress) socketAddress;*/
+		this.ctx = ctx;
+		this.fhr = fhr;
+		/*
+		 * headers = httpHeaders; method = httpMethod.toString(); this.body = body;
+		 * queryString = uri.getQuery(); path = uri.getPath(); fullpath = path; remote =
+		 * (InetSocketAddress) socketAddress;
+		 */
 		try {
-			uri=new URI(fhr.uri());
+			uri = new URI(fhr.uri()).normalize();
 		} catch (URISyntaxException e) {
 			// TODO Auto-generated catch block
-			logger.warning(e.getMessage());
+			Request.logger.warning(e.getMessage());
 		}
 		path = uri.getPath();
 		fullpath = path;
@@ -105,10 +106,11 @@ public class Request {
 	 */
 	public void SkipPathOnce() {
 		int pos = path.indexOf('/', 1);
-		if (pos == -1)
+		if (pos == -1) {
 			path = "/";
-		else
+		} else {
 			path = path.substring(pos);
+		}
 	}
 
 	/**
@@ -117,10 +119,11 @@ public class Request {
 	 * @param starts the starts<br>
 	 */
 	public void SkipPath(String starts) {
-		if (path.length() <= starts.length())
+		if (path.length() <= starts.length()) {
 			path = "/";
-		else
+		} else {
 			path = path.substring(starts.length());
+		}
 	}
 
 	public Map<String, String> getQuery() {
@@ -129,9 +132,7 @@ public class Request {
 		return query = Utils.queryToMap(getQueryString());
 	}
 
-	public HttpHeaders getHeaders() {
-		return fhr.headers();
-	}
+	public HttpHeaders getHeaders() { return fhr.headers(); }
 
 	public String getMethod() { return fhr.method().toString(); }
 
@@ -139,38 +140,37 @@ public class Request {
 
 	public String getFullpath() { return fullpath; }
 
-	public InetSocketAddress getRemote() { return (InetSocketAddress)ctx.channel().remoteAddress(); }
+	public InetSocketAddress getRemote() { return (InetSocketAddress) ctx.channel().remoteAddress(); }
 
 	public String getQueryString() { return uri.getQuery(); }
-	public HttpPostRequestDecoder getFullPost() {
-		return new HttpPostRequestDecoder(fhr);
-	}
-	public Map<String, String> getPost(){
-		if(post==null) {
-			post=new HashMap<>();
-			HttpPostRequestDecoder hpd=new HttpPostRequestDecoder(fhr);
-			while(hpd.hasNext()) {
-				InterfaceHttpData ihd=hpd.next();
-				if(ihd.getHttpDataType()==HttpDataType.Attribute) {
+
+	public HttpPostRequestDecoder getFullPost() { return new HttpPostRequestDecoder(new DefaultHttpDataFactory(false), fhr); }
+
+	public Map<String, String> getPost() {
+		if (post == null) {
+			post = new HashMap<>();
+			HttpPostRequestDecoder hpd = new HttpPostRequestDecoder(new DefaultHttpDataFactory(false), fhr);
+			List<InterfaceHttpData> ihds=hpd.getBodyHttpDatas();
+			for(InterfaceHttpData ihd:ihds){
+				if (ihd.getHttpDataType() == HttpDataType.Attribute) {
 					try {
-						post.put(ihd.getName(),((Attribute)ihd).getValue());
+						post.put(ihd.getName(), ((Attribute) ihd).getValue());
 					} catch (IOException e) {
 						// TODO Auto-generated catch block
-						logger.warning(e.getMessage());
+						Request.logger.warning(e.getMessage());
 					}
 				}
 			}
 		}
 		return post;
 	}
-	public Map<String,InterfaceHttpData> getPostMap(){
-		Map<String,InterfaceHttpData> postmap=new HashMap<>();
-		HttpPostRequestDecoder hpd=new HttpPostRequestDecoder(fhr);
-		while(hpd.hasNext()) {
-			InterfaceHttpData ihd=hpd.next();
-			if(ihd.getHttpDataType()==HttpDataType.Attribute) {
-				postmap.put(ihd.getName(),ihd);
-			}
+
+	public Map<String, InterfaceHttpData> getPostMap() {
+		Map<String, InterfaceHttpData> postmap = new HashMap<>();
+		HttpPostRequestDecoder hpd = new HttpPostRequestDecoder(new DefaultHttpDataFactory(false), fhr);
+		List<InterfaceHttpData> ihds=hpd.getBodyHttpDatas();
+		for(InterfaceHttpData ihd:ihds){
+			if (ihd.getHttpDataType() == HttpDataType.Attribute) { postmap.put(ihd.getName(), ihd); }
 		}
 		return postmap;
 	}

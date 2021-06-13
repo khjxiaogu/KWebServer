@@ -6,7 +6,6 @@ import java.io.PrintStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
-import java.util.Objects;
 
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
@@ -49,7 +48,7 @@ public class SystemLogger extends PrintStream {
 		@Override
 		public void write(byte b[], int off, int len) throws IOException {
 			// Objects.checkFromIndexSize(off, len, b.length);
-			//ensureOpen();
+			// ensureOpen();
 		}
 
 		@Override
@@ -61,8 +60,7 @@ public class SystemLogger extends PrintStream {
 	public SystemLogger(String name) {
 		super(SystemLogger.logStream);
 		this.name = name;
-		if (name == null)
-			name = "未知";
+		if (name == null) { name = "未知"; }
 	}
 
 	@Override

@@ -110,5 +110,5 @@ public class RootContext<T extends ContextHandler<T>, S>
 	public CommandDispatcher getDispatcher() { return command; }
 
 	@Override
-	public void call(Request req, Response res) {Intern.call(req, res);}
+	public void call(Request req, Response res) { Intern.call(req, res); }
 }

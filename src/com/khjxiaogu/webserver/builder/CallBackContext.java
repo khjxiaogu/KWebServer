@@ -9,6 +9,7 @@ import com.khjxiaogu.webserver.web.CallBack;
 import com.khjxiaogu.webserver.web.ContextHandler;
 import com.khjxiaogu.webserver.web.ForceSecureHandler;
 import com.khjxiaogu.webserver.web.ForceSecureHandler.Protocol;
+import com.khjxiaogu.webserver.web.HostDispatchHandler;
 import com.khjxiaogu.webserver.web.lowlayer.Request;
 import com.khjxiaogu.webserver.web.lowlayer.Response;
 
@@ -22,7 +23,7 @@ import com.khjxiaogu.webserver.web.lowlayer.Response;
  *            泛型参数
  */
 public class CallBackContext<T extends ContextHandler<T>, S extends CallBack>
-        implements CommandDispatcher, Context<T>, RulableContext<CallBackContext<T, S>>,CallBack {
+        implements CommandDispatcher, Context<T>, RulableContext<CallBackContext<T, S>>, CallBack {
 	private T sup;
 	private S provider;
 	private CommandDispatcher command;
@@ -80,7 +81,7 @@ public class CallBackContext<T extends ContextHandler<T>, S extends CallBack>
 	 */
 	@Override
 	public CallBackContext<T, S> rule(String rule) {
-		sup.createContext(rule,this);
+		sup.createContext(rule, this);
 		return this;
 	}
 
@@ -126,8 +127,12 @@ public class CallBackContext<T extends ContextHandler<T>, S extends CallBack>
 
 	@Override
 	public boolean dispatchCommand(String msg, CommandSender user) { return command.dispatchCommand(msg, user); }
+
 	@Override
-	public void call(Request req, Response res) {
-		sec.call(req, res);
+	public void call(Request req, Response res) { sec.call(req, res); }
+
+	public CallBackContext<T, S> registerCommand() {
+		if (provider instanceof CommandHandler) { add((CommandHandler) provider); }
+		return this;
 	};
 }

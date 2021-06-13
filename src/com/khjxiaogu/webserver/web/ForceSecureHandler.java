@@ -5,7 +5,7 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 // TODO: Auto-generated Javadoc
 /**
  * Class ForceSecureHandler. Force http or https connection 强制http或者https链接
- * 
+ *
  * @author khjxiaogu file: ForceSecureHandler.java time: 2020年6月12日
  */
 public class ForceSecureHandler implements ServerProvider {

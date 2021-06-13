@@ -3,7 +3,7 @@ package com.khjxiaogu.webserver.command;
 // TODO: Auto-generated Javadoc
 /**
  * Class CommandExpSplitter. 指令分割类
- * 
+ *
  * @author khjxiaogu file: CommandExpSplitter.java time: 2020年6月12日
  */
 public class CommandExpSplitter implements CommandExp {
@@ -19,7 +19,7 @@ public class CommandExpSplitter implements CommandExp {
 		/**
 		 * Execute.<br>
 		 * 执行指令
-		 * 
+		 *
 		 * @param msg    the command arguments<br>
 		 *               指令参数
 		 * @param sender the command sender<br>

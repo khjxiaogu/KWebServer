@@ -1,5 +1,5 @@
 /*
- * 
+ *
  */
 package com.khjxiaogu.webserver.builder;
 
@@ -21,10 +21,9 @@ import com.khjxiaogu.webserver.wrappers.ServiceClassWrapper;
 /**
  * Interface ExtendableContext.
  *
- * @author khjxiaogu
- * file: ExtendableContext.java
- * time: 2021年4月17日
- * @param <T> the generic type<br>泛型参数
+ * @author khjxiaogu file: ExtendableContext.java time: 2021年4月17日
+ * @param <T> the generic type<br>
+ *            泛型参数
  */
 public interface ExtendableContext<T extends ExtendableContext<T>> extends ContextHandler<T> {
 
@@ -35,6 +34,7 @@ public interface ExtendableContext<T extends ExtendableContext<T>> extends Conte
 	 * @return dispatcher<br>
 	 */
 	CommandDispatcher getDispatcher();
+
 	/**
 	 * Creates the URI dispatch.<br>
 	 * 创建根据URI匹配回调的子上下文对象
@@ -53,7 +53,7 @@ public interface ExtendableContext<T extends ExtendableContext<T>> extends Conte
 	 * @return return created context<br>
 	 *         返回创建的对象
 	 */
-	default ServerContext<HostDispatchHandler, T> createHostDispatch(){
+	default ServerContext<HostDispatchHandler, T> createHostDispatch() {
 		return createDispatch(new HostDispatchHandler());
 	};
 
@@ -64,10 +64,7 @@ public interface ExtendableContext<T extends ExtendableContext<T>> extends Conte
 	 * @return return created context<br>
 	 *         返回创建的对象
 	 */
-	default ServerContext<MethodContext, T> createMethodDispatch(){
-		return createDispatch(new MethodContext());
-	}
-;
+	default ServerContext<MethodContext, T> createMethodDispatch() { return createDispatch(new MethodContext()); };
 
 	/**
 	 * Creates a file server.<br>
@@ -78,7 +75,7 @@ public interface ExtendableContext<T extends ExtendableContext<T>> extends Conte
 	 * @return return created context<br>
 	 *         返回创建的对象
 	 */
-	default CallBackContext<T,FilePageService> createFilePath(File root){
+	default CallBackContext<T, FilePageService> createFilePath(File root) {
 		return createDispatch(new FilePageService(root));
 	};
 
@@ -94,7 +91,7 @@ public interface ExtendableContext<T extends ExtendableContext<T>> extends Conte
 	 *         返回新的上下文对象
 	 */
 	default <Y extends ContextHandler<Y>> ServerContext<Y, T> createDispatch(Y dispatcher) {
-		return new ServerContext<>(dispatcher,(T)this,this.getDispatcher());
+		return new ServerContext<>(dispatcher, (T) this, this.getDispatcher());
 	};
 
 	/**
@@ -108,8 +105,8 @@ public interface ExtendableContext<T extends ExtendableContext<T>> extends Conte
 	 * @return return created context <br>
 	 *         返回子上下文
 	 */
-	default <Y extends ServerProvider> ProviderContext<Y, T> createDispatch(Y provider){
-		return new ProviderContext<>(provider,(T)this,this.getDispatcher());
+	default <Y extends ServerProvider> ProviderContext<Y, T> createDispatch(Y provider) {
+		return new ProviderContext<>(provider, (T) this, this.getDispatcher());
 	};
 
 	/**
@@ -122,11 +119,9 @@ public interface ExtendableContext<T extends ExtendableContext<T>> extends Conte
 	 *                 回调
 	 * @return return created context <br>
 	 *         返回子上下文
-	 * @deprecated 应该使用ServerProvider
 	 */
-	@Deprecated
-	default <Y extends CallBack> CallBackContext<T, Y> createDispatch(Y callback){
-		return new CallBackContext<>(callback,(T)this,this.getDispatcher());
+	default <Y extends CallBack> CallBackContext<T, Y> createDispatch(Y callback) {
+		return new CallBackContext<>(callback, (T) this, this.getDispatcher());
 	};
 
 	/**
@@ -139,13 +134,14 @@ public interface ExtendableContext<T extends ExtendableContext<T>> extends Conte
 	 */
 	default ServerContext<URIMatchDispatchHandler, T> createWrapper(ServiceClass obj) {
 		try {
-			return new WrapperContext<>(new ServiceClassWrapper(obj),(T)this,this.getDispatcher());
+			return new WrapperContext<>(new ServiceClassWrapper(obj), (T) this, this.getDispatcher());
 		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
 		        | InvocationTargetException | NoSuchMethodException | SecurityException e) {
 			e.printStackTrace();
 			return createURIDispatch();
 		}
 	};
+
 	/**
 	 * Patch by an patcher.<br>
 	 * 使用带自定义规则的服务提供者提供的规则和回调

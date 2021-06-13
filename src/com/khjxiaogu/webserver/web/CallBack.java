@@ -6,7 +6,7 @@ import com.khjxiaogu.webserver.web.lowlayer.Response;
 // TODO: Auto-generated Javadoc
 /**
  * Interface CallBack. 回调函数接口 抽象的http回调函数，输入了http的公有方法类。 若不对回复进行写入，将返回默认404页面
- * 
+ *
  * @author: khjxiaogu file: CallBack.java time: 2020年5月8日
  */
 @FunctionalInterface

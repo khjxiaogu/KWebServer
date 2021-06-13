@@ -65,9 +65,9 @@ public class Commands implements CommandHandler, CommandHelper, CommandDispatche
 		int space = msg.indexOf(' ');
 		String label = null;
 		String next = "";
-		if (space == -1)
+		if (space == -1) {
 			label = msg;
-		else {
+		} else {
 			label = msg.substring(0, space);
 			next = msg.substring(space + 1);
 		}
@@ -76,10 +76,11 @@ public class Commands implements CommandHandler, CommandHelper, CommandDispatche
 			return ch.dispatchCommand(next, user);
 		else if (label.equals("help")) {
 			for (Map.Entry<String, CommandExp> com : commands.entrySet())
-				if (com.getValue() instanceof CommandHelper)
+				if (com.getValue() instanceof CommandHelper) {
 					user.sendMessage(com.getKey() + " " + ((CommandHelper) com.getValue()).getHelp());
-				else
+				} else {
 					user.sendMessage(com.getKey() + " 无帮助信息");
+				}
 			return true;
 		}
 		return false;
@@ -88,7 +89,7 @@ public class Commands implements CommandHandler, CommandHelper, CommandDispatche
 	/**
 	 * List command, split with space.<br>
 	 * 获取指令列表，用空格分隔
-	 * 
+	 *
 	 * @return return list command <br>
 	 *         返回字符串指令列表
 	 */

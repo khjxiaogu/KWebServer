@@ -4,9 +4,9 @@ import java.nio.charset.StandardCharsets;
 
 import com.khjxiaogu.webserver.Utils;
 import com.khjxiaogu.webserver.web.lowlayer.Request;
-import com.khjxiaogu.webserver.wrappers.InAdapter;
+import com.khjxiaogu.webserver.wrappers.StaticInAdapter;
 
-public class StringIn implements InAdapter {
+public class StringIn extends StaticInAdapter {
 
 	public StringIn() {}
 

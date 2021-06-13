@@ -12,14 +12,11 @@ public class MethodRestrictHandler implements CallBack {
 
 	public MethodRestrictHandler(CallBack orig) { this.orig = orig; }
 
-	public MethodRestrictHandler(ServerProvider crn) { this.orig = crn.getListener(); }
+	public MethodRestrictHandler(ServerProvider crn) { orig = crn.getListener(); }
 
 	public void addMethod(String method) { allow.add(method); }
 
 	@Override
-	public void call(Request req,Response res) {
-		if (allow.contains(req.getMethod()))
-			orig.call(req, res);
-	}
+	public void call(Request req, Response res) { if (allow.contains(req.getMethod())) { orig.call(req, res); }else res.write(405); }
 
 }
