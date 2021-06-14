@@ -27,10 +27,10 @@ public class RootContext<T extends ContextHandler<T>, S>
 	private S Owner;
 	private CommandDispatcher command;
 
-	RootContext(T Intern, S owner, CommandDispatcher command) {
+	RootContext(T Intern, S Owner, CommandDispatcher command) {
 		this.Intern = Intern;
 		this.command = command;
-		Owner = owner;
+		this.Owner = Owner;
 	}
 
 	/**

@@ -23,7 +23,7 @@ public class SystemLogger extends PrintStream {
 
 		private Level(String format) { this.format = format; }
 
-		protected String format;
+		protected final String format;
 	}
 
 	static {

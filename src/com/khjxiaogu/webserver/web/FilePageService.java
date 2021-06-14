@@ -2,6 +2,9 @@ package com.khjxiaogu.webserver.web;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.Paths;
 import java.text.DateFormatSymbols;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -108,6 +111,10 @@ public class FilePageService implements CallBack {
 	 *         返回 string
 	 */
 	private static String sanitizeUri(String uri) {
+		try {
+			uri=Paths.get(new URI(uri)).normalize().toUri().toString();
+		} catch (URISyntaxException e) {
+		}
 		if (uri == null || uri.isEmpty() || uri.charAt(0) != '/')
 			return "/";
 

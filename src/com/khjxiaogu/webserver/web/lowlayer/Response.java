@@ -33,8 +33,6 @@ public class Response {
 	private final FullHttpRequest cor;
 	private final ChannelHandlerContext ex;
 	private HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
-	private boolean isSecure;
-
 	/**
 	 * Instantiates a new Response with a ChannelHandlerContext object.<br>
 	 * 使用一个ChannelHandlerContext新建一个Response类<br>
@@ -45,7 +43,6 @@ public class Response {
 	Response(ChannelHandlerContext t, boolean isSecure, FullHttpRequest req) {
 		cor = req;
 		ex = t;
-		this.isSecure = isSecure;
 		if (isSecure) { response.headers().set("Strict-Transport-Security", "max-age=15556000"); }
 		response.headers().set("Access-Control-Allow-Origin", "*");
 	}
@@ -212,8 +209,7 @@ public class Response {
 		 */
 		if (!f.exists())
 			return;
-		try {
-			RandomAccessFile raf = new RandomAccessFile(f, "r");
+		try(RandomAccessFile raf = new RandomAccessFile(f, "r");){
 			response.setStatus(HttpResponseStatus.valueOf(status));
 			HttpUtil.setContentLength(response, raf.length());
 			if (response.headers().get(HttpHeaderNames.CONTENT_TYPE) == null) {
@@ -226,12 +222,9 @@ public class Response {
 				ex.writeAndFlush(new HttpChunkedInput(new ChunkedFile(raf)));
 			} else {
 				ByteBuf buf = ex.alloc().buffer((int) raf.length());
-				FileInputStream fis = new FileInputStream(f);
-				buf.writeBytes(fis, (int) raf.length());
-				raf.close();
+				buf.writeBytes(raf.getChannel(), (int) raf.length());
 				ex.write(response);
 				ex.writeAndFlush(new DefaultLastHttpContent(buf)).await();
-				fis.close();
 			}
 
 		} catch (IOException | InterruptedException e) {

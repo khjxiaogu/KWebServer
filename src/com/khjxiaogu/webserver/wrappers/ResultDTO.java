@@ -32,7 +32,7 @@ public class ResultDTO {
 	 *
 	 * @author khjxiaogu file: ResultDTO.java time: 2020年9月7日
 	 */
-	public class HHttpHeader {
+	public static class HHttpHeader {
 
 		/**
 		 * The key.<br>
