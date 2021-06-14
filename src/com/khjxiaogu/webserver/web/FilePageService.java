@@ -20,27 +20,27 @@ import io.netty.handler.codec.http.HttpHeaders;
 /**
  * Class FilePageService. 文件系统页面服务，根据文件路径发送网页 /将自动导向到当前目录下/index.html
  *
- * @author: khjxiaogu file: FilePageService.java time: 2020年5月8日
+ * @author khjxiaogu file: FilePageService.java time: 2020年5月8日
  */
 public class FilePageService implements CallBack {
 
 	/**
-	 * The dest.<br />
+	 * The dest.<br>
 	 * 成员 dest.
 	 */
 	private File dest;
 
 	/**
-	 * The format.<br />
+	 * The format.<br>
 	 * 成员 format.
 	 */
 	private final SimpleDateFormat format = new SimpleDateFormat("EEE', 'dd' 'MMM' 'yyyy' 'HH:mm:ss 'GMT'");
 
 	/**
-	 * Instantiates a new FilePageService with a root directory.<br />
-	 * 新建一个FilePageService类，设置根目录。<br />
+	 * Instantiates a new FilePageService with a root directory.<br>
+	 * 新建一个FilePageService类，设置根目录。<br>
 	 *
-	 * @param root the root<br />
+	 * @param root the root<br>
 	 *             根目录
 	 */
 	public FilePageService(File root) {
@@ -50,7 +50,7 @@ public class FilePageService implements CallBack {
 	}
 
 	/**
-	 * The logger.<br />
+	 * The logger.<br>
 	 * 成员 logger.
 	 */
 	SystemLogger logger = new SystemLogger("页面");
@@ -94,17 +94,17 @@ public class FilePageService implements CallBack {
 	}
 
 	/**
-	 * Constant INSECURE_URI.<br />
+	 * Constant INSECURE_URI.<br>
 	 * 常量 INSECURE_URI.
 	 */
 	private static final Pattern INSECURE_URI = Pattern.compile(".*[<>&\"].*");
 
 	/**
-	 * Sanitize uri.<br />
+	 * Sanitize uri.<br>
 	 * 清理并安全化URI，转为操作系统相关URI
 	 *
-	 * @param uri the uri<br />
-	 * @return return sanitized uri <br />
+	 * @param uri the uri<br>
+	 * @return return sanitized uri <br>
 	 *         返回 string
 	 */
 	private static String sanitizeUri(String uri) {

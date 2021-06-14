@@ -12,37 +12,37 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 /**
  * Class HostDispatchHandler. 根据域名决定调用回调的处理器
  *
- * @author: khjxiaogu file: HostDispatchHandler.java time: 2020年5月8日
+ * @author khjxiaogu file: HostDispatchHandler.java time: 2020年5月8日
  */
 public class HostDispatchHandler implements ContextHandler<HostDispatchHandler> {
 
 	/**
-	 * The ctxs.<br />
+	 * The ctxs.<br>
 	 * 成员 ctxs.
 	 */
 	private List<CallBackContext> ctxs = new ArrayList<>();
 
 	/**
-	 * The default call back.<br />
+	 * The default call back.<br>
 	 * 成员 default call back.
 	 */
 	private CallBack defaultCallBack = null;
 
 	/**
-	 * Gets the default call back.<br />
+	 * Gets the default call back.<br>
 	 * 获取默认回调.
 	 *
-	 * @return default call back<br />
+	 * @return default call back<br>
 	 */
 	public CallBack getDefaultCallBack() { return defaultCallBack; }
 
 	/**
-	 * Sets the default call back.<br />
+	 * Sets the default call back.<br>
 	 * 设置默认回调
 	 *
-	 * @param defaultCallBack the default call back<br />
+	 * @param defaultCallBack the default call back<br>
 	 *                        默认回调
-	 * @return return self <br />
+	 * @return return self <br>
 	 *         返回自身
 	 */
 	public HostDispatchHandler setDefaultCallBack(CallBack defaultCallBack) {
@@ -51,26 +51,26 @@ public class HostDispatchHandler implements ContextHandler<HostDispatchHandler> 
 	}
 
 	/**
-	 * Instantiates a new HostDispatchHandler with a default CallBack.<br />
-	 * 使用一个默认回调新建一个HostDispatchHandler类<br />
+	 * Instantiates a new HostDispatchHandler with a default CallBack.<br>
+	 * 使用一个默认回调新建一个HostDispatchHandler类<br>
 	 *
-	 * @param defaults the defaults<br />
+	 * @param defaults the defaults<br>
 	 */
 	public HostDispatchHandler(CallBack defaults) { defaultCallBack = defaults; }
 
 	/**
-	 * Instantiates a new HostDispatchHandler.<br />
-	 * 新建一个HostDispatchHandler类<br />
+	 * Instantiates a new HostDispatchHandler.<br>
+	 * 新建一个HostDispatchHandler类<br>
 	 */
 	public HostDispatchHandler() {
 
 	}
 
 	/**
-	 * Instantiates a new HostDispatchHandler with a default ServerProvider.<br />
-	 * 使用一个默认服务类新建一个HostDispatchHandler类<br />
+	 * Instantiates a new HostDispatchHandler with a default ServerProvider.<br>
+	 * 使用一个默认服务类新建一个HostDispatchHandler类<br>
 	 *
-	 * @param defaults the defaults<br />
+	 * @param defaults the defaults<br>
 	 */
 	public HostDispatchHandler(ServerProvider defaults) { this(defaults.getListener()); }
 

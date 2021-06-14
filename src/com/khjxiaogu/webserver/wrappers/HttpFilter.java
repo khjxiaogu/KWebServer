@@ -16,6 +16,7 @@ public interface HttpFilter {
 	 *
 	 * @param req the req<br>
 	 * @param res the res<br>
+	 * @param filters the filters<br>
 	 * @return false, if no more handle needed<br>
 	 *         如果不需要继续传递，返回false。
 	 * @throws Exception if an exception occurred.<br>

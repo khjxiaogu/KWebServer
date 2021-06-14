@@ -94,7 +94,6 @@ public class ResultDTO {
 	 * Write.<br>
 	 *
 	 * @param code the code<br>
-	 * @param body the body<br>
 	 */
 	public void write(int code) { this.code = code; }
 

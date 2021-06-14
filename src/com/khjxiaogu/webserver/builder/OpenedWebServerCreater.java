@@ -82,6 +82,7 @@ public interface OpenedWebServerCreater {
 	 * Read console commands.<br>
 	 * 监听后台指令
 	 *
+	 * @param logger the logger<br>
 	 * @return return self <br>
 	 *         返回自身
 	 */

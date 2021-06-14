@@ -22,7 +22,7 @@ public class ForceSecureHandler implements ServerProvider {
 	 *
 	 * @param wrapped     the wrapped callback<br>
 	 *                    修饰的回调
-	 * @param forceSecure the force secure<br>
+	 * @param protocol the forced protocol<br>
 	 *                    是否强制https
 	 */
 	public ForceSecureHandler(CallBack wrapped, Protocol protocol) {

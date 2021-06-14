@@ -4,8 +4,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 /**
+ * time 2020年3月28日 project:KChatServer
  * @author khjxiaogu
- * @time 2020年3月28日 project:KChatServer
+ * 
  */
 public class LogStream extends OutputStream {
 

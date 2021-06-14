@@ -9,38 +9,38 @@ import com.khjxiaogu.webserver.web.lowlayer.Response;
 /**
  * Class MethodContext. 按照请求类型
  *
- * @author: khjxiaogu file: MethodContext.java time: 2020年5月8日
+ * @author khjxiaogu file: MethodContext.java time: 2020年5月8日
  */
 public class MethodContext implements ContextHandler<MethodContext> {
 
 	/**
-	 * The ctxs.<br />
+	 * The ctxs.<br>
 	 * 成员 ctxs.
 	 */
 	private Map<String, CallBack> ctxs = new HashMap<>();
 
 	/**
-	 * The default call back.<br />
+	 * The default call back.<br>
 	 * 成员 default call back.
 	 */
 	private CallBack defaultCallBack = null;
 
 	/**
-	 * Gets the default call back.<br />
+	 * Gets the default call back.<br>
 	 * 获取默认回调.
 	 *
-	 * @return default call back<br />
+	 * @return default call back<br>
 	 *         默认回调
 	 */
 	public CallBack getDefaultCallBack() { return defaultCallBack; }
 
 	/**
-	 * Sets the default call back.<br />
+	 * Sets the default call back.<br>
 	 * 设置默认回调
 	 *
-	 * @param defaultCallBack the default call back<br />
+	 * @param defaultCallBack the default call back<br>
 	 *                        默认回调
-	 * @return return self<br />
+	 * @return return self<br>
 	 *         返回自身
 	 */
 	public MethodContext setDefaultCallBack(CallBack defaultCallBack) {
@@ -49,27 +49,27 @@ public class MethodContext implements ContextHandler<MethodContext> {
 	}
 
 	/**
-	 * Instantiates a new MethodContext with a default callBack.<br />
-	 * 使用一个默认回调CallBack新建一个MethodContext类<br />
+	 * Instantiates a new MethodContext with a default callBack.<br>
+	 * 使用一个默认回调CallBack新建一个MethodContext类<br>
 	 *
-	 * @param defaults the default callback<br />
+	 * @param defaults the default callback<br>
 	 *                 默认回调
 	 */
 	public MethodContext(CallBack defaults) { defaultCallBack = defaults; }
 
 	/**
-	 * Instantiates a new MethodContext.<br />
-	 * 新建一个MethodContext类<br />
+	 * Instantiates a new MethodContext.<br>
+	 * 新建一个MethodContext类<br>
 	 */
 	public MethodContext() {
 
 	}
 
 	/**
-	 * Instantiates a new MethodContext with a default ServerProvider.<br />
-	 * 使用一个默认服务类新建一个MethodContext类<br />
+	 * Instantiates a new MethodContext with a default ServerProvider.<br>
+	 * 使用一个默认服务类新建一个MethodContext类<br>
 	 *
-	 * @param defaults the defaults<br />
+	 * @param defaults the defaults<br>
 	 */
 	public MethodContext(ServerProvider defaults) { this(defaults.getListener()); }
 

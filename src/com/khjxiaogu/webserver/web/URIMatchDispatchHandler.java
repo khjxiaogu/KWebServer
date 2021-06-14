@@ -12,27 +12,27 @@ import com.khjxiaogu.webserver.web.lowlayer.Response;
  * Class URIMatchDispatchHandler. 根据URI调用回调的类 判断成功后，从请求的当前路径中去除路径字符串 只要开头符合字符串即可
  *
  * 如请求路径为 /foo/bar 监听方法有 1./bar 2./foo 3./ 会选用2号监听器并且设置请求路径为/bar
- * 设置的前后不影响判断顺序，优先判断长的规则
- *
- * @author: khjxiaogu file: URIMatchDispatchHandler.java time: 2020年5月8日
+ * 设置的前后不影响判断顺序，优先判断长的规则 file: URIMatchDispatchHandler.java time: 2020年5月8日
+ * 
+ * @author khjxiaogu
  */
 public class URIMatchDispatchHandler implements ContextHandler<URIMatchDispatchHandler>, Patcher {
 
 	/**
-	 * The ctxs.<br />
+	 * The ctxs.<br>
 	 * 成员 ctxs.
 	 */
 	protected List<CallBackContext> ctxs = new ArrayList<>();
 
 	/**
-	 * The wildcard.<br />
+	 * The wildcard.<br>
 	 * 成员 wildcard.
 	 */
 	protected CallBack wildcard;
 
 	/**
-	 * Instantiates a new URIMatchDispatchHandler.<br />
-	 * 新建一个URIMatchDispatchHandler类<br />
+	 * Instantiates a new URIMatchDispatchHandler.<br>
+	 * 新建一个URIMatchDispatchHandler类<br>
 	 */
 	public URIMatchDispatchHandler() {}
 

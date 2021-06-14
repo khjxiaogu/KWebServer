@@ -136,8 +136,6 @@ public class Response {
 	 *
 	 * @param status  the http status code<br>
 	 *                http回复码
-	 * @param queries the response headers, can be null<br>
-	 *                回复头，可以为null
 	 */
 	public void write(int status) {
 		response.setStatus(HttpResponseStatus.valueOf(status));

@@ -6,9 +6,89 @@
 	<artifactId>KWebServer</artifactId>
 	<version>0.0.2</version>
 	<name>kwebserver</name>
+	<description>A simple light-weighted webserver.</description>
+	<url>http://khjxiaogu.github.io/KWebServer</url>
+	<licenses>
+		<license>
+			<name>The GNU General Public License, Version 3.0</name>
+			<url>https://www.gnu.org/licenses/gpl-3.0.en.html</url>
+		</license>
+	</licenses>
+	<developers>
+		<developer>
+			<name>khjxiaogu</name>
+			<email>khjxiaogu@gmail.com</email>
+			<organization>KTechResearch</organization>
+			<organizationUrl>http://www.khjxiaogu.com</organizationUrl>
+		</developer>
+	</developers>
+	<scm>
+		<connection>scm:git:git://github.com/khjxiaogu/KWebServer.git</connection>
+		<developerConnection>scm:git:ssh://github.com:khjxiaogu/KWebServer.git</developerConnection>
+		<url>http://github.com/khjxiaogu/KWebServer/tree/master</url>
+	</scm>
 	<build>
 		<finalName>${project.name}-${project.version}</finalName>
 		<sourceDirectory>src</sourceDirectory>
+		<plugins>
+			<plugin>
+				<groupId>org.sonatype.plugins</groupId>
+				<artifactId>nexus-staging-maven-plugin</artifactId>
+				<version>1.6.7</version>
+				<extensions>true</extensions>
+				<configuration>
+					<serverId>ossrh</serverId>
+					<nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
+					<autoReleaseAfterClose>true</autoReleaseAfterClose>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>2.2.1</version>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<goals>
+							<goal>jar-no-fork</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>2.9.1</version>
+				<executions>
+					<execution>
+						<id>attach-javadocs</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<javadocVersion>1.8</javadocVersion>
+					<encoding>utf-8</encoding>
+					<show>public</show>
+					<source>1.8</source>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-gpg-plugin</artifactId>
+				<version>1.5</version>
+				<executions>
+					<execution>
+						<id>sign-artifacts</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>sign</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
 	</build>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -20,12 +100,6 @@
 			<id>alimaven</id>
 			<name>aliyun maven</name>
 			<url>https://maven.aliyun.com/nexus/content/groups/public/</url>
-			<releases>
-				<enabled>true</enabled>
-			</releases>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
 		</repository>
 		<repository>
 			<id>globalmvn</id>
@@ -33,10 +107,13 @@
 		</repository>
 	</repositories>
 	<distributionManagement>
+		<snapshotRepository>
+			<id>ossrh</id>
+			<url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+		</snapshotRepository>
 		<repository>
-			<id>github</id>
-			<name>GitHub khjxiaogu Apache Maven Packages</name>
-			<url>https://maven.pkg.github.com/khjxiaogu/KWebServer</url>
+			<id>ossrh</id>
+			<url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
 		</repository>
 	</distributionManagement>
 	<dependencies>
@@ -53,7 +130,7 @@
 		<dependency>
 			<groupId>io.netty</groupId>
 			<artifactId>netty-all</artifactId>
-			<version>4.1.48.Final</version>
+			<version>4.1.60.Final</version>
 		</dependency>
 		<dependency>
 			<groupId>io.netty</groupId>
