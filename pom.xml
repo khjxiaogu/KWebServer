@@ -19,13 +19,13 @@
 			<name>khjxiaogu</name>
 			<email>khjxiaogu@gmail.com</email>
 			<organization>KTechResearch</organization>
-			<organizationUrl>http://www.khjxiaogu.com</organizationUrl>
+			<organizationUrl>https://www.khjxiaogu.com</organizationUrl>
 		</developer>
 	</developers>
 	<scm>
 		<connection>scm:git:git://github.com/khjxiaogu/KWebServer.git</connection>
 		<developerConnection>scm:git:ssh://github.com:khjxiaogu/KWebServer.git</developerConnection>
-		<url>http://github.com/khjxiaogu/KWebServer/tree/master</url>
+		<url>https://github.com/khjxiaogu/KWebServer/tree/master</url>
 	</scm>
 	<build>
 		<finalName>${project.name}-${project.version}</finalName>
