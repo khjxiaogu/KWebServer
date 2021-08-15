@@ -3,6 +3,7 @@ package com.khjxiaogu.webserver.wrappers.outadapters;
 import java.io.File;
 
 import com.khjxiaogu.webserver.web.lowlayer.Response;
+import com.khjxiaogu.webserver.wrappers.ErrorResultDTO;
 import com.khjxiaogu.webserver.wrappers.OutAdapter;
 import com.khjxiaogu.webserver.wrappers.ResultDTO;
 import com.khjxiaogu.webserver.wrappers.ResultDTO.HHttpHeader;
@@ -24,6 +25,9 @@ public class ResultDTOOut implements OutAdapter {
 			res.write(result.code, (byte[]) result.getBody());
 		} else {
 			res.write(result.code, String.valueOf(result.getBody()));
+		}
+		if(result instanceof ErrorResultDTO) {
+			throw ((ErrorResultDTO) result).getException();
 		}
 	}
 

@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import com.khjxiaogu.webserver.Utils;
+import com.khjxiaogu.webserver.WebServerException;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -228,7 +229,7 @@ public class Response {
 			}
 
 		} catch (IOException | InterruptedException e) {
-			e.printStackTrace();
+			throw new WebServerException(e);
 		}
 
 	}

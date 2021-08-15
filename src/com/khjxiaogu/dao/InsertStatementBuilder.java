@@ -27,7 +27,7 @@ public class InsertStatementBuilder implements InputStatement<InsertStatementBui
 	}
 
 	@Override
-	public InsertStatementBuilder set(String key, Object val) { return null; }
+	public InsertStatementBuilder set(String key, Object val) { inserts.add(new InsertExpr(key,val));return this; }
 
 	@Override
 	public String getSQL() {

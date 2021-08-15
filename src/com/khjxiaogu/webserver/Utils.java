@@ -116,9 +116,8 @@ public final class Utils {
 			return Utils.bytesToHex(digest.digest(data.getBytes(StandardCharsets.UTF_8)));
 		} catch (NoSuchAlgorithmException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new InternalException(e);
 		}
-		return null;
 	}
 
 	public static String getMime(File f) {
@@ -130,7 +129,7 @@ public final class Utils {
 				mime = Files.probeContentType(f.toPath());
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
-				e.printStackTrace();
+				throw new InternalException(e);
 			}
 		}
 		return mime;

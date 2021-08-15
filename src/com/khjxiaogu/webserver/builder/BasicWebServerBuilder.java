@@ -1,6 +1,3 @@
-/*
- *
- */
 package com.khjxiaogu.webserver.builder;
 
 import java.io.File;
@@ -11,6 +8,7 @@ import java.util.Scanner;
 import javax.net.ssl.SSLEngine;
 
 import com.khjxiaogu.webserver.Utils;
+import com.khjxiaogu.webserver.WebServerException;
 import com.khjxiaogu.webserver.command.CommandDispatcher;
 import com.khjxiaogu.webserver.command.CommandExp;
 import com.khjxiaogu.webserver.command.CommandExpSplitter.SplittedExp;
@@ -68,7 +66,6 @@ public class BasicWebServerBuilder implements CommandDispatcher, WebServerCreate
 	private File NotFound;
 	private Scanner scan;
 	private ChannelGroup opened = new DefaultChannelGroup(new UnorderedThreadPoolEventExecutor(2));
-
 	@Override
 	public BasicWebServerBuilder add(CommandHandler ch) {
 		cmds.add(ch);
@@ -96,15 +93,15 @@ public class BasicWebServerBuilder implements CommandDispatcher, WebServerCreate
 	public SystemLogger getLogger() { return logger; }
 
 	private static class ConsoleCommandSender implements CommandSender {
-		private PrintStream console;
+		private SystemLogger console;
 
-		public ConsoleCommandSender(PrintStream console) {
-			this.console = console;
+		public ConsoleCommandSender(SystemLogger logger) {
+			this.console = logger;
 
 		}
 
 		@Override
-		public void sendMessage(String msg) { console.println(msg); }
+		public void sendMessage(String msg) { console.info(msg); }
 
 		@Override
 		public String getUID() { return Utils.systemUID; }
@@ -187,17 +184,10 @@ public class BasicWebServerBuilder implements CommandDispatcher, WebServerCreate
 	}
 
 	public RootContext<URIMatchDispatchHandler, BasicWebServerBuilder> createWrapperRoot(ServiceClass obj) {
-
-		try {
-			RootContext<URIMatchDispatchHandler, BasicWebServerBuilder> rt = new RootContext<>(
-			        new ServiceClassWrapper(obj), this, cmds);
-			root = rt;
-			return rt;
-		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-		        | InvocationTargetException | NoSuchMethodException | SecurityException e) {
-			e.printStackTrace();
-			return createURIRoot();
-		}
+		RootContext<URIMatchDispatchHandler, BasicWebServerBuilder> rt = new RootContext<>(
+		        new ServiceClassWrapper(obj), this, cmds);
+		root = rt;
+		return rt;
 	}
 
 	/**
@@ -357,9 +347,8 @@ public class BasicWebServerBuilder implements CommandDispatcher, WebServerCreate
 			opened.newCloseFuture().await();
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new WebServerException(e,logger);
 		}
-		shutdown();
 		return this;
 	}
 
@@ -410,7 +399,7 @@ public class BasicWebServerBuilder implements CommandDispatcher, WebServerCreate
 								logger.error("执行失败");
 							}
 					} catch (Throwable t) {
-						t.printStackTrace(logger);
+						logger.printStackTrace(t);
 					}
 				}
 				scan.close();

@@ -3,23 +3,24 @@ package com.khjxiaogu.webserver.loging;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
-import java.util.Locale;
-
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
 
-public class SystemLogger extends PrintStream {
-	private final static SimpleDateFormat format = new SimpleDateFormat("hh:mm:ss");
+import com.khjxiaogu.webserver.WebServerException;
+
+public class SystemLogger {
+	private final static SimpleDateFormat format = new SimpleDateFormat("hh:mm:ss"); //$NON-NLS-1$
 
 	public static enum Level {
-		CONFIG("[%s][%s]" + new Ansi().fg(Ansi.Color.CYAN).toString() + "[配置]" + new Ansi().reset().toString() + "%s"),
-		INFO("[%s][%s]" + new Ansi().fg(Ansi.Color.GREEN).toString() + "[信息]" + new Ansi().reset().toString() + "%s"),
-		WARNING("[%s][%s]" + new Ansi().fg(Ansi.Color.YELLOW).toString() + "[警告]" + new Ansi().reset().toString()
-		        + "%s"),
-		ERROR("[%s][%s]" + new Ansi().fg(Ansi.Color.RED).toString() + "[错误]" + new Ansi().reset().toString() + "%s"),
-		SEVERE("[%s][%s]" + new Ansi().fg(Ansi.Color.RED).toString() + "[致命]" + new Ansi().reset().toString() + "%s");
+		CONFIG("[%s]"+new Ansi().fgBright(Ansi.Color.BLUE).toString()+"%s" + new Ansi().fg(Ansi.Color.CYAN).toString() + Messages.getString("logger.config") + new Ansi().reset().toString()), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+		INFO("[%s]"+new Ansi().fgBright(Ansi.Color.BLUE).toString()+"%s" + new Ansi().fg(Ansi.Color.GREEN).toString() + Messages.getString("logger.info") + new Ansi().reset().toString()), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+		WARNING("[%s]"+new Ansi().fgBright(Ansi.Color.BLUE).toString()+"%s" + new Ansi().fg(Ansi.Color.YELLOW).toString() + Messages.getString("logger.warning") + new Ansi().reset().toString()), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+		ERROR("[%s]"+new Ansi().fgBright(Ansi.Color.BLUE).toString()+"%s" + new Ansi().fgBright(Ansi.Color.RED).toString() + Messages.getString("logger.error") + new Ansi().reset().toString()), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+		SEVERE("[%s]"+new Ansi().fgBright(Ansi.Color.BLUE).toString()+"%s" + new Ansi().fg(Ansi.Color.RED).toString() + Messages.getString("logger.fatal") + new Ansi().reset().toString()); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
 		private Level(String format) { this.format = format; }
 
@@ -33,13 +34,13 @@ public class SystemLogger extends PrintStream {
 	public String getName() { return name; }
 
 	private String name;
-	private static PrintStream outStream = System.out;
-	public static OutputStream logStream = new OutputStream() {
+	public String getQuoteName() {return "["+name+"]";} //$NON-NLS-1$ //$NON-NLS-2$
+	private static final OutputStream nullstream=new OutputStream() {
 		private volatile boolean closed;
 
 		private void ensureOpen() throws IOException {
 			if (closed)
-				throw new IOException("Stream closed");
+				throw new IOException("Stream closed"); //$NON-NLS-1$
 		}
 
 		@Override
@@ -55,154 +56,101 @@ public class SystemLogger extends PrintStream {
 		public void close() { closed = true; }
 	};
 
-	public void setOut(OutputStream out) { this.out = out; }
-
+	PrintStream out;
+	public void setOut(PrintStream out) { this.out = out; }
+	
 	public SystemLogger(String name) {
-		super(SystemLogger.logStream);
+		out=System.out;
 		this.name = name;
-		if (name == null) { name = "未知"; }
+		if (name == null) { name = Messages.getString("logger.unknown"); } //$NON-NLS-1$
 	}
+	private static class DummyPrintWriter extends PrintWriter{
+		public DummyPrintWriter(){ super(nullstream); }
+		SystemLogger logger;
+		public DummyPrintWriter(SystemLogger logger, Level level) {
+			this();
+			this.logger = logger;
+			this.level = level;
+		}
+		Level level;
+		@Override
+		public void println(Object o) {
+			synchronized(this) {
+				logger.log(level, String.valueOf(o));
+			}
+		}
+	};
+	private static class DummyAsPrintWriter extends PrintWriter{
+		public DummyAsPrintWriter(){ super(nullstream); }
+		String head;
+		SystemLogger logger;
+		public DummyAsPrintWriter(SystemLogger logger,String head) {
+			super(nullstream);
+			this.head=head;
+			this.logger=logger;
+		}
+		@Override
+		public void println(Object o) {
+			synchronized(this) {
+				logger.logInternal(head,String.valueOf(o));
+			}
+		}
+	};
 
-	@Override
-	public void print(String s) {
-		super.print(s);
-		SystemLogger.outStream.print(s);
+	DummyPrintWriter[] dpw=new DummyPrintWriter[5];
+	protected DummyPrintWriter getForLevel(Level l) {
+		DummyPrintWriter maybe=dpw[l.ordinal()];
+		if(maybe!=null)return maybe;
+		maybe=dpw[l.ordinal()]=new DummyPrintWriter(this,l);
+		return maybe;
 	}
-
-	@Override
-	public void print(boolean b) {
-		super.print(b);
-		SystemLogger.outStream.print(b);
+	public void printStackTrace(Throwable t) {
+		printStackTrace(Level.ERROR,t);
 	}
-
-	@Override
-	public void print(char c) {
-		super.print(c);
-		SystemLogger.outStream.print(c);
+	public void printStackTrace(Level l,Throwable t) {
+		handleException(t);
+		printFullStackTrace(l,t);
 	}
-
-	@Override
-	public void print(int i) {
-		super.print(i);
-		SystemLogger.outStream.print(i);
+	private static void handleException(Throwable t) {
+		handleException(t,new Throwable().getStackTrace());
 	}
-
-	@Override
-	public void print(long l) {
-		super.print(l);
-		SystemLogger.outStream.print(l);
+	private static void handleException(Throwable t,StackTraceElement[] current) {
+		if(t==null)return;
+		StackTraceElement[] ot=t.getStackTrace();
+        int m = ot.length - 1;
+        int n = current.length - 1;
+        while (m >= 0 && n >=0 && ot[m].equals(current[n])) {
+            m--; n--;
+        }
+		t.setStackTrace(Arrays.copyOfRange(ot,0, m+1));
+		handleException(t.getCause(),current);
+		for(Throwable ex:t.getSuppressed())
+			handleException(ex,current);
 	}
-
-	@Override
-	public void print(float f) {
-		super.print(f);
-		SystemLogger.outStream.print(f);
+	public void printFullStackTrace(Throwable t) {
+		printFullStackTrace(Level.ERROR,t);
 	}
-
-	@Override
-	public void print(double d) {
-		super.print(d);
-		SystemLogger.outStream.print(d);
-	}
-
-	@Override
-	public void print(char[] s) {
-		super.print(s);
-		SystemLogger.outStream.print(s);
-	}
-
-	@Override
-	public void print(Object obj) {
-		super.print(obj);
-		SystemLogger.outStream.print(obj);
-	}
-
-	@Override
-	public PrintStream printf(Locale l, String format, Object... args) {
-		SystemLogger.outStream.printf(l, format, args);
-		super.printf(l, format, args);
-		return this;
-	}
-
-	@Override
-	public PrintStream printf(String x, Object... objects) {
-		String s = String.format(x, objects);
-		SystemLogger.outStream.print(s);
-		super.print(s.replaceAll("\u001B\\[[;\\d]*m", ""));
-		return this;
-	}
-
-	@Override
-	public void println() {
-		super.println();
-		SystemLogger.outStream.println();
-	}
-
-	@Override
-	public void write(int b) { super.write(b); }
-
-	@Override
-	public void write(byte[] buf, int off, int len) { super.write(buf, off, len); }
-
-	@Override
-	public void println(boolean x) {
-		super.println(x);
-		SystemLogger.outStream.println();
-	}
-
-	@Override
-	public void println(char x) {
-		super.println(x);
-		SystemLogger.outStream.println();
-	}
-
-	@Override
-	public void println(int x) {
-		super.println(x);
-		SystemLogger.outStream.println();
-	}
-
-	@Override
-	public void println(long x) {
-		super.println(x);
-		SystemLogger.outStream.println();
-	}
-
-	@Override
-	public void println(float x) {
-		super.println(x);
-		SystemLogger.outStream.println();
-	}
-
-	@Override
-	public void println(double x) {
-		super.println(x);
-		SystemLogger.outStream.println();
-	}
-
-	@Override
-	public void println(char[] x) {
-		super.println(x);
-		SystemLogger.outStream.println();
-	}
-
-	@Override
-	public void println(String x) {
-		super.println(x);
-		SystemLogger.outStream.println();
-	}
-
-	@Override
-	public void println(Object x) {
-		super.println(x);
-		SystemLogger.outStream.println();
+	public void printFullStackTrace(Level l,Throwable t) {
+		if(t instanceof WebServerException&&t.getCause()!=null) {
+			t.getCause().printStackTrace(new DummyAsPrintWriter(this,doTranslateHeader(l,SystemLogger.format.format(new Date()),this.getQuoteName()+((WebServerException) t).getLoggers())));
+		}else
+			t.printStackTrace(getForLevel(l));
 	}
 
 	public void log(Level l, String s) {
-		printf(l.format, SystemLogger.format.format(new Date()), name, s);
-		println();
+		logInternal(doTranslateHeader(l, SystemLogger.format.format(new Date()),getQuoteName()), s);
+		
 	}
-
+	public void logAs(Level l,String as, String s) {
+		logInternal(doTranslateHeader(l,SystemLogger.format.format(new Date()), getQuoteName()+as),s);
+	}
+	public String doTranslateHeader(Level l,String date,String name) {
+		return String.format(l.format,date,name);
+	}
+	private void logInternal(String head,String info) {
+		out.print(head);
+		out.println(info);
+	}
 	public void severe(Object s) { log(Level.SEVERE, String.valueOf(s)); }
 
 	public void error(Object s) { log(Level.ERROR, String.valueOf(s)); }

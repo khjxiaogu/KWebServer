@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import com.khjxiaogu.webserver.WebServerException;
 import com.khjxiaogu.webserver.loging.SystemLogger;
 
 import io.netty.channel.ChannelFuture;
@@ -59,7 +60,7 @@ public class NettyHandlerBridge extends SimpleChannelInboundHandler<FullHttpRequ
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
 		ctx.channel().close();
 		NettyHandlerBridge.logger.warning(cause.getMessage());
-		cause.printStackTrace(NettyHandlerBridge.logger);
+		NettyHandlerBridge.logger.printStackTrace(cause);
 	}
 
 	@Override
@@ -82,7 +83,7 @@ public class NettyHandlerBridge extends SimpleChannelInboundHandler<FullHttpRequ
 			if (httpHandler.handle(ctx, isHttps, request))
 				return;
 		} catch (Throwable t) {
-			t.printStackTrace(NettyHandlerBridge.logger);
+			NettyHandlerBridge.logger.printStackTrace(t);
 			FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
 			        HttpResponseStatus.INTERNAL_SERVER_ERROR);
 			boolean keepAlive = HttpUtil.isKeepAlive(request);

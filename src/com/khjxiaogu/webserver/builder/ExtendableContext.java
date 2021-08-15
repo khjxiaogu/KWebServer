@@ -133,13 +133,7 @@ public interface ExtendableContext<T extends ExtendableContext<T>> extends Conte
 	 *         返回子上下文
 	 */
 	default ServerContext<URIMatchDispatchHandler, T> createWrapper(ServiceClass obj) {
-		try {
-			return new WrapperContext<>(new ServiceClassWrapper(obj), (T) this, this.getDispatcher());
-		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-		        | InvocationTargetException | NoSuchMethodException | SecurityException e) {
-			e.printStackTrace();
-			return createURIDispatch();
-		}
+		return new WrapperContext<>(new ServiceClassWrapper(obj), (T) this, this.getDispatcher());
 	};
 
 	/**
@@ -168,13 +162,7 @@ public interface ExtendableContext<T extends ExtendableContext<T>> extends Conte
 	 */
 	@SuppressWarnings("unchecked")
 	default T patchBy(ServiceClass p) {
-		try {
-			new ServiceClassWrapper(p).patchSite((T) this);
-		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
-		        | NoSuchMethodException | SecurityException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		new ServiceClassWrapper(p).patchSite((T) this);
 		return (T) this;
 	}
 

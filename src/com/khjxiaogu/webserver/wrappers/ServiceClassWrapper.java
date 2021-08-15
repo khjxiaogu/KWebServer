@@ -17,6 +17,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import com.khjxiaogu.webserver.InternalException;
+import com.khjxiaogu.webserver.WebServerException;
 import com.khjxiaogu.webserver.annotations.Adapter;
 import com.khjxiaogu.webserver.annotations.Filter;
 import com.khjxiaogu.webserver.annotations.FilterClass;
@@ -52,11 +54,10 @@ public class ServiceClassWrapper extends URIMatchDispatchHandler {
 	private ServiceClass iobj;
 	private Map<String, ContextHandler<?>> paths = new HashMap<>();
 
-	public ServiceClassWrapper(ServiceClass object) throws InstantiationException, IllegalAccessException,
-	        IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
+	public ServiceClassWrapper(ServiceClass object){
 		iobj = object;
 		Class<?> clazz = object.getClass();
-		object.getLogger().info("正在载入...");
+		object.getLogger().info("Loading...");
 		Map<String, Integer> meths = new HashMap<>();
 		Method[] mets = clazz.getDeclaredMethods();
 		for (Method m : mets) {// check if method dispatch needed
@@ -77,7 +78,15 @@ public class ServiceClassWrapper extends URIMatchDispatchHandler {
 				hfs.add(FilterManager.getFilter(fc.value())); 
 			}
 			for (FilterClass fc:fcannos) { 
-				hfs.add(fc.value().getConstructor().newInstance()); 
+				try {
+					hfs.add(fc.value().getConstructor().newInstance());
+				}catch(InvocationTargetException ite) {
+					throw new WebServerException(ite.getCause());
+				} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+				         | NoSuchMethodException | SecurityException e) {
+					// TODO Auto-generated catch blockhandle
+					throw new WebServerException(e);
+				} 
 			}
 			HttpFilter[] hf=hfs.toArray(new HttpFilter[0]);
 			object.getLogger().info("Patching Method:" + m.getName());
@@ -260,7 +269,9 @@ class MethodServiceProvider implements CallBack {
 	public void call(Request req, Response res) {
 		try {
 			if (doFilter(req, res)) { processResults(req, res, met.invoke(objthis, processParameters(req, res))); }
-		} catch (Exception e) {
+		}catch(InvocationTargetException ite) {
+			exceptionHandler(req, res, ite.getCause());
+		} catch (Throwable e) {
 			exceptionHandler(req, res, e);
 		}
 	}
@@ -276,7 +287,7 @@ class MethodServiceProvider implements CallBack {
 		return true;
 	}
 
-	protected Object[] processParameters(Request req, Response res) throws Exception {
+	protected Object[] processParameters(Request req, Response res) throws Throwable {
 		return new Object[] { req, res };
 	}
 
@@ -290,9 +301,14 @@ class MethodServiceProvider implements CallBack {
 	/**
 	 * @param req
 	 */
-	protected void exceptionHandler(Request req, Response res, Exception e) {
-		e.printStackTrace(objthis.getLogger());
+	protected void exceptionHandler(Request req, Response res, Throwable throwable) {
 		if (!res.isWritten()) { res.write(500, null, "Internal Server Error".getBytes(StandardCharsets.UTF_8)); }
+		if(throwable instanceof WebServerException) {
+			((WebServerException) throwable).setLogger(objthis.getLogger());
+			throw ((WebServerException) throwable);
+		}
+		throw new WebServerException(throwable,objthis.getLogger());
+		
 	}
 }
 
@@ -315,9 +331,7 @@ class MethodAdaptProvider extends MethodServiceProvider {
 		MethodAdaptProvider.handlers.put(PostQuery.class, anno -> new PostQueryValue(((PostQuery) anno).value()));
 		MethodAdaptProvider.handlers.put(Header.class, anno -> new HeaderValue(((Header) anno).value()));
 	}
-	public MethodAdaptProvider(Method met, ServiceClass objthis, HttpFilter[] filters)
-	        throws InstantiationException, IllegalAccessException,
-	        IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
+	public MethodAdaptProvider(Method met, ServiceClass objthis, HttpFilter[] filters){
 		super(met, objthis, filters);
 		paramadap = new InAdapter[met.getParameterCount()];
 		int i = 0;
@@ -328,34 +342,50 @@ class MethodAdaptProvider extends MethodServiceProvider {
 				if (ah != null) {
 					try {
 						paramadap[i] = ah.handle(anno);
+					}catch(InvocationTargetException ite) {
+						throw new InternalException(ite.getCause(),objthis.getLogger());
 					} catch (Exception e) {
 						// TODO Auto-generated catch block
-						e.printStackTrace();
+						throw new InternalException(e,objthis.getLogger());
 					}
 				}
 			}
 			i++;
 		}
-		resultadap = met.getAnnotation(Adapter.class).value().getConstructor().newInstance();
+		try {
+			resultadap = met.getAnnotation(Adapter.class).value().getConstructor().newInstance();
+		}catch(InvocationTargetException ite){
+			throw new WebServerException(ite.getCause());
+		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException 
+		        | NoSuchMethodException | SecurityException e) {
+			// TODO Auto-generated catch block
+			throw new WebServerException(e);
+		}
 	}
 
 	@Override
-	protected void exceptionHandler(Request req, Response res, Exception e) {
-		e.printStackTrace(objthis.getLogger());
+	protected void exceptionHandler(Request req, Response res,Throwable e) {
 		objthis.getLogger().warning("error occured at " + objthis.getClass().getSimpleName() + "#" + met.getName());
 		objthis.getLogger().warning(e.getMessage());
 		if (!res.isWritten()) { res.write(500, null, "Internal Server Error".getBytes(StandardCharsets.UTF_8)); }
+		if(e instanceof WebServerException) {
+			((WebServerException) e).setLogger(objthis.getLogger());
+			throw ((WebServerException) e);
+		}
+		throw new WebServerException(e,objthis.getLogger());
 	}
 
 	@Override
-	protected Object[] processParameters(Request req, Response res) throws Exception {
+	protected Object[] processParameters(Request req, Response res) throws Throwable {
 		Object[] params = new Object[paramadap.length];
 		if (paramadap.length > 0) {
 			for (int i = 0; i < paramadap.length; i++)
 				if (paramadap[i] != null) {
 					try {
 					params[i] = paramadap[i].handle(req, objthis);
-					}catch(Exception e){
+					}catch(InvocationTargetException ite) {
+						throw ite.getCause();
+					} catch(Exception e){
 						objthis.getLogger().error("error when processing param "+i);
 						throw e;
 					}

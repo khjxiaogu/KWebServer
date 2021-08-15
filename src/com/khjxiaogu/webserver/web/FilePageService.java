@@ -13,6 +13,8 @@ import java.util.Locale;
 import java.util.TimeZone;
 import java.util.regex.Pattern;
 
+import com.khjxiaogu.webserver.InternalException;
+import com.khjxiaogu.webserver.WebServerException;
 import com.khjxiaogu.webserver.loging.SystemLogger;
 import com.khjxiaogu.webserver.web.lowlayer.Request;
 import com.khjxiaogu.webserver.web.lowlayer.Response;
@@ -76,9 +78,10 @@ public class FilePageService implements CallBack {
 			try {
 				res.write(500, ex.getMessage().getBytes("UTF-8"));
 			} catch (UnsupportedEncodingException e) {
-				e.printStackTrace(logger);
+				res.write(500,"Internal Server Error");
+				throw new InternalException(e,logger);
 			}
-			ex.printStackTrace(logger);
+			throw new WebServerException(ex,logger);
 		}
 	}
 
@@ -111,10 +114,10 @@ public class FilePageService implements CallBack {
 	 *         返回 string
 	 */
 	private static String sanitizeUri(String uri) {
-		try {
+		/*try {
 			uri=Paths.get(new URI(uri)).normalize().toUri().toString();
 		} catch (URISyntaxException e) {
-		}
+		}*/
 		if (uri == null || uri.isEmpty() || uri.charAt(0) != '/')
 			return "/";
 

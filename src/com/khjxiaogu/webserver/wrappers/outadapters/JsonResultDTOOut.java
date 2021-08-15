@@ -2,6 +2,7 @@ package com.khjxiaogu.webserver.wrappers.outadapters;
 
 import com.google.gson.Gson;
 import com.khjxiaogu.webserver.web.lowlayer.Response;
+import com.khjxiaogu.webserver.wrappers.ErrorResultDTO;
 import com.khjxiaogu.webserver.wrappers.OutAdapter;
 import com.khjxiaogu.webserver.wrappers.ResultDTO;
 import com.khjxiaogu.webserver.wrappers.ResultDTO.HHttpHeader;
@@ -16,6 +17,9 @@ public class JsonResultDTOOut implements OutAdapter {
 			for (HHttpHeader hd : result.getHeaders()) { res.setHeader(hd.key, hd.val); }
 		}
 		res.write(result.code, new Gson().toJson(result.getBody()));
+		if(result instanceof ErrorResultDTO) {
+			throw ((ErrorResultDTO) result).getException();
+		}
 	}
 
 }

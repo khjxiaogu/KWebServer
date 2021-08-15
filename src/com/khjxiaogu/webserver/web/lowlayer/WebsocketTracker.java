@@ -1,5 +1,8 @@
 package com.khjxiaogu.webserver.web.lowlayer;
 
+
+import com.khjxiaogu.webserver.loging.SystemLogger.Level;
+
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
@@ -52,6 +55,6 @@ public class WebsocketTracker extends SimpleChannelInboundHandler<WebSocketFrame
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
 		ctx.channel().close();
 		NettyHandlerBridge.logger.warning(cause.getMessage());
-		cause.printStackTrace(NettyHandlerBridge.logger);
+		NettyHandlerBridge.logger.printStackTrace(Level.WARNING,cause);
 	}
 }

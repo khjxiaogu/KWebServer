@@ -2,44 +2,50 @@ package com.khjxiaogu.webserver.loging;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.PrintStream;
 
 /**
  * time 2020年3月28日 project:KChatServer
  * @author khjxiaogu
  * 
  */
-public class LogStream extends OutputStream {
+public class LogStream extends PrintStream {
 
 	private static OutputStream dout = System.out;
-	OutputStream sout;
+	PrintStream sout;
 
-	public LogStream(OutputStream sout) { this.sout = sout; }
-
-	@Override
-	public synchronized void close() throws IOException { sout.close(); }
+	public LogStream(OutputStream sout) { super(dout);this.sout = new PrintStream(sout); }
 
 	@Override
-	public synchronized void flush() throws IOException {
+	public synchronized void close() { sout.close(); }
+
+	@Override
+	public synchronized void flush() {
+		super.flush();
 		sout.flush();
-		LogStream.dout.flush();
 	}
-
 	@Override
-	public synchronized void write(int val) throws IOException {
+	public synchronized void write(int val) {
+		super.write(val);
 		sout.write(val);
-		LogStream.dout.write(val);
 	}
 
 	@Override
 	public synchronized void write(byte[] ba) throws IOException {
 		sout.write(ba);
-		LogStream.dout.write(ba);
+		super.write(ba);
 	}
 
 	@Override
-	public synchronized void write(byte[] ba, int str, int len) throws IOException {
+	public synchronized void write(byte[] ba, int str, int len) {
 		sout.write(ba, str, len);
-		LogStream.dout.write(ba, str, len);
+		super.write(ba, str, len);
 	}
 
+	@Override
+	public void print(String s) { sout.print(s.replaceAll("\u001B\\[[;\\d]*m", ""));super.print(s); }
+
+	@Override
+	public void print(Object obj) { print(String.valueOf(obj)); }
+	
 }
