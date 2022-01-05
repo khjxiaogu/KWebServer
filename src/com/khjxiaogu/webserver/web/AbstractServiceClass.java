@@ -3,7 +3,7 @@ package com.khjxiaogu.webserver.web;
 import com.khjxiaogu.webserver.loging.SystemLogger;
 
 public abstract class AbstractServiceClass implements ServiceClass {
-	SystemLogger logger;
+	protected SystemLogger logger;
 
 	@Override
 	public SystemLogger getLogger() {

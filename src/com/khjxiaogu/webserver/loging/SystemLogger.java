@@ -16,11 +16,11 @@ public class SystemLogger {
 	private final static SimpleDateFormat format = new SimpleDateFormat("hh:mm:ss"); //$NON-NLS-1$
 
 	public static enum Level {
-		CONFIG("[%s]"+new Ansi().fgBright(Ansi.Color.BLUE).toString()+"%s" + new Ansi().fg(Ansi.Color.CYAN).toString() + Messages.getString("logger.config") + new Ansi().reset().toString()), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-		INFO("[%s]"+new Ansi().fgBright(Ansi.Color.BLUE).toString()+"%s" + new Ansi().fg(Ansi.Color.GREEN).toString() + Messages.getString("logger.info") + new Ansi().reset().toString()), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-		WARNING("[%s]"+new Ansi().fgBright(Ansi.Color.BLUE).toString()+"%s" + new Ansi().fg(Ansi.Color.YELLOW).toString() + Messages.getString("logger.warning") + new Ansi().reset().toString()), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-		ERROR("[%s]"+new Ansi().fgBright(Ansi.Color.BLUE).toString()+"%s" + new Ansi().fgBright(Ansi.Color.RED).toString() + Messages.getString("logger.error") + new Ansi().reset().toString()), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-		SEVERE("[%s]"+new Ansi().fgBright(Ansi.Color.BLUE).toString()+"%s" + new Ansi().fg(Ansi.Color.RED).toString() + Messages.getString("logger.fatal") + new Ansi().reset().toString()); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+		CONFIG("[%s]"+new Ansi().fgBright(Ansi.Color.BLUE).toString()+"%s" + new Ansi().fg(Ansi.Color.CYAN).toString() + LogMessages.getString("logger.config") + new Ansi().reset().toString()), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+		INFO("[%s]"+new Ansi().fgBright(Ansi.Color.BLUE).toString()+"%s" + new Ansi().fg(Ansi.Color.GREEN).toString() + LogMessages.getString("logger.info") + new Ansi().reset().toString()), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+		WARNING("[%s]"+new Ansi().fgBright(Ansi.Color.BLUE).toString()+"%s" + new Ansi().fg(Ansi.Color.YELLOW).toString() + LogMessages.getString("logger.warning") + new Ansi().reset().toString()), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+		ERROR("[%s]"+new Ansi().fgBright(Ansi.Color.BLUE).toString()+"%s" + new Ansi().fgBright(Ansi.Color.RED).toString() + LogMessages.getString("logger.error") + new Ansi().reset().toString()), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+		SEVERE("[%s]"+new Ansi().fgBright(Ansi.Color.BLUE).toString()+"%s" + new Ansi().fg(Ansi.Color.RED).toString() + LogMessages.getString("logger.fatal") + new Ansi().reset().toString()); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
 		private Level(String format) { this.format = format; }
 
@@ -62,7 +62,7 @@ public class SystemLogger {
 	public SystemLogger(String name) {
 		out=System.out;
 		this.name = name;
-		if (name == null) { name = Messages.getString("logger.unknown"); } //$NON-NLS-1$
+		if (name == null) { name = LogMessages.getString("logger.unknown"); } //$NON-NLS-1$
 	}
 	private static class DummyPrintWriter extends PrintWriter{
 		public DummyPrintWriter(){ super(nullstream); }
