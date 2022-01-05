@@ -5,3 +5,6 @@
 /saves/
 /doc/
 /Sdk4J.jar
+/.settings
+/.project
+/.classpath
