@@ -1,13 +1,13 @@
 package com.khjxiaogu.webserver.web;
 
-import com.khjxiaogu.webserver.loging.SystemLogger;
+import com.khjxiaogu.webserver.loging.SimpleLogger;
 
 public abstract class AbstractServiceClass implements ServiceClass {
-	protected SystemLogger logger;
+	protected SimpleLogger logger;
 
 	@Override
-	public SystemLogger getLogger() {
-		if (logger == null) { logger = new SystemLogger(getName()); }
+	public SimpleLogger getLogger() {
+		if (logger == null) { logger = new SimpleLogger(getName()); }
 		return logger;
 	}
 

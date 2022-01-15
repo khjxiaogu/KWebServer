@@ -1,7 +1,7 @@
 package com.khjxiaogu.webserver.web.lowlayer;
 
 
-import com.khjxiaogu.webserver.loging.SystemLogger.Level;
+import com.khjxiaogu.webserver.loging.SimpleLogger.Level;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;

@@ -5,7 +5,7 @@ import com.khjxiaogu.webserver.command.CommandExp;
 import com.khjxiaogu.webserver.command.CommandExpSplitter.SplittedExp;
 import com.khjxiaogu.webserver.command.CommandHandler;
 import com.khjxiaogu.webserver.command.CommandSender;
-import com.khjxiaogu.webserver.loging.SystemLogger;
+import com.khjxiaogu.webserver.loging.SimpleLogger;
 
 public interface OpenedWebServerCreater {
 
@@ -27,7 +27,7 @@ public interface OpenedWebServerCreater {
 	 * @return logger<br>
 	 *         日志记录器
 	 */
-	SystemLogger getLogger();
+	SimpleLogger getLogger();
 
 	/**
 	 * Set up a https server.<br>
@@ -86,7 +86,7 @@ public interface OpenedWebServerCreater {
 	 * @return return self <br>
 	 *         返回自身
 	 */
-	OpenedWebServerCreater readConsole(SystemLogger logger);
+	OpenedWebServerCreater readConsole(SimpleLogger logger);
 
 	boolean dispatchCommand(String msg, CommandSender sender);
 

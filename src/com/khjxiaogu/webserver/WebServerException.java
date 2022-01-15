@@ -2,7 +2,7 @@ package com.khjxiaogu.webserver;
 
 import java.lang.reflect.InvocationTargetException;
 
-import com.khjxiaogu.webserver.loging.SystemLogger;
+import com.khjxiaogu.webserver.loging.SimpleLogger;
 
 public class WebServerException extends RuntimeException {
 
@@ -14,7 +14,7 @@ public class WebServerException extends RuntimeException {
 
 	public String getLoggers() { return loggers; }
 
-	public void setLogger(SystemLogger logger) { loggers = logger.getQuoteName() + loggers; }
+	public void setLogger(SimpleLogger logger) { loggers = logger.getQuoteName() + loggers; }
 
 	public void setSource(String source) { loggers = source + loggers; }
 
@@ -49,7 +49,7 @@ public class WebServerException extends RuntimeException {
 		this.initCause(cause);
 	}
 
-	public WebServerException(Throwable cause, SystemLogger logger) {
+	public WebServerException(Throwable cause, SimpleLogger logger) {
 		super();
 		while (true) {
 			if (cause instanceof InvocationTargetException) {

@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import com.khjxiaogu.webserver.WebServerException;
-import com.khjxiaogu.webserver.loging.SystemLogger;
+import com.khjxiaogu.webserver.loging.SimpleLogger;
 
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
@@ -25,7 +25,7 @@ import io.netty.handler.codec.http.HttpVersion;
 @Sharable
 public class NettyHandlerBridge extends SimpleChannelInboundHandler<FullHttpRequest> {
 
-	public final static SystemLogger logger = new SystemLogger("网络");
+	public final static SimpleLogger logger = new SimpleLogger("网络");
 	private File notFound;
 	private Handler httpHandler;
 	private boolean isHttps = true;

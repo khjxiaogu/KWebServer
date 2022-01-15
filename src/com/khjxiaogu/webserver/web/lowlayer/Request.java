@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.khjxiaogu.webserver.Utils;
-import com.khjxiaogu.webserver.loging.SystemLogger;
+import com.khjxiaogu.webserver.loging.SimpleLogger;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -28,7 +28,7 @@ import io.netty.handler.codec.http.multipart.InterfaceHttpData.HttpDataType;
  * @author khjxiaogu file: Request.java time: 2020年6月12日
  */
 public class Request {
-	private final static SystemLogger logger = new SystemLogger("请求解析");
+	private final static SimpleLogger logger = new SimpleLogger("请求解析");
 	/**
 	 * The http query(URL only).<br>
 	 * 请求参数（仅包含URL中的）.

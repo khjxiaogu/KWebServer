@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
 
 import com.khjxiaogu.webserver.InternalException;
 import com.khjxiaogu.webserver.WebServerException;
-import com.khjxiaogu.webserver.loging.SystemLogger;
+import com.khjxiaogu.webserver.loging.SimpleLogger;
 import com.khjxiaogu.webserver.web.lowlayer.Request;
 import com.khjxiaogu.webserver.web.lowlayer.Response;
 
@@ -58,7 +58,7 @@ public class FilePageService implements CallBack {
 	 * The logger.<br>
 	 * 成员 logger.
 	 */
-	SystemLogger logger = new SystemLogger("页面");
+	SimpleLogger logger = new SimpleLogger("页面");
 
 	@Override
 	public void call(Request req, Response res) {

@@ -15,7 +15,7 @@ import com.khjxiaogu.webserver.command.CommandExpSplitter.SplittedExp;
 import com.khjxiaogu.webserver.command.CommandHandler;
 import com.khjxiaogu.webserver.command.CommandSender;
 import com.khjxiaogu.webserver.command.Commands;
-import com.khjxiaogu.webserver.loging.SystemLogger;
+import com.khjxiaogu.webserver.loging.SimpleLogger;
 import com.khjxiaogu.webserver.web.CallBack;
 import com.khjxiaogu.webserver.web.ContextHandler;
 import com.khjxiaogu.webserver.web.FilePageService;
@@ -62,7 +62,7 @@ public class BasicWebServerBuilder implements CommandDispatcher, WebServerCreate
 	                                                                                                             // best
 	                                                                                                             // number
 	private EventLoopGroup workerGroup = new NioEventLoopGroup(Runtime.getRuntime().availableProcessors() * 10 + 1);
-	private SystemLogger logger = new SystemLogger("服务器");
+	private SimpleLogger logger = new SimpleLogger("服务器");
 	private File NotFound;
 	private Scanner scan;
 	private ChannelGroup opened = new DefaultChannelGroup(new UnorderedThreadPoolEventExecutor(2));
@@ -90,12 +90,12 @@ public class BasicWebServerBuilder implements CommandDispatcher, WebServerCreate
 	 *         日志记录器
 	 */
 	@Override
-	public SystemLogger getLogger() { return logger; }
+	public SimpleLogger getLogger() { return logger; }
 
 	private static class ConsoleCommandSender implements CommandSender {
-		private SystemLogger console;
+		private SimpleLogger console;
 
-		public ConsoleCommandSender(SystemLogger logger) {
+		public ConsoleCommandSender(SimpleLogger logger) {
 			this.console = logger;
 
 		}
@@ -381,7 +381,7 @@ public class BasicWebServerBuilder implements CommandDispatcher, WebServerCreate
 	 *         返回自身
 	 */
 	@Override
-	public BasicWebServerBuilder readConsole(SystemLogger logger) {
+	public BasicWebServerBuilder readConsole(SimpleLogger logger) {
 		ConsoleCommandSender ccs = new ConsoleCommandSender(logger);
 		scan = new Scanner(System.in);
 		scan.useDelimiter("[\r\n]");

@@ -2,7 +2,7 @@ package com.khjxiaogu.webserver.web.lowlayer;
 
 import java.io.IOException;
 
-import com.khjxiaogu.webserver.loging.SystemLogger;
+import com.khjxiaogu.webserver.loging.SimpleLogger;
 import com.khjxiaogu.webserver.web.CallBack;
 import com.khjxiaogu.webserver.web.ServerProvider;
 
@@ -11,7 +11,7 @@ import io.netty.handler.codec.http.FullHttpRequest;
 
 public class Handler {
 	CallBack cb = null;
-	SystemLogger logger = new SystemLogger("包装层");
+	SimpleLogger logger = new SimpleLogger("包装层");
 
 	public boolean handle(ChannelHandlerContext ctx, boolean isSecure, FullHttpRequest fhr) throws IOException {
 		/*

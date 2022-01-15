@@ -1,6 +1,6 @@
 package com.khjxiaogu.webserver;
 
-import com.khjxiaogu.webserver.loging.SystemLogger;
+import com.khjxiaogu.webserver.loging.SimpleLogger;
 
 public class InternalException extends WebServerException {
 
@@ -12,5 +12,5 @@ public class InternalException extends WebServerException {
 
 	public InternalException(Throwable cause) { super(cause); }
 
-	public InternalException(Throwable cause, SystemLogger logger) { super(cause, logger); }
+	public InternalException(Throwable cause, SimpleLogger logger) { super(cause, logger); }
 }

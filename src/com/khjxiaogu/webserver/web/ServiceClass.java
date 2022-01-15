@@ -1,9 +1,9 @@
 package com.khjxiaogu.webserver.web;
 
-import com.khjxiaogu.webserver.loging.SystemLogger;
+import com.khjxiaogu.webserver.loging.SimpleLogger;
 
 public interface ServiceClass {
-	SystemLogger getLogger();
+	SimpleLogger getLogger();
 
 	public String getName();
 }

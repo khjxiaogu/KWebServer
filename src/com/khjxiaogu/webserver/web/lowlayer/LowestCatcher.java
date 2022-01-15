@@ -1,6 +1,6 @@
 package com.khjxiaogu.webserver.web.lowlayer;
 
-import com.khjxiaogu.webserver.loging.SystemLogger;
+import com.khjxiaogu.webserver.loging.SimpleLogger;
 
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -13,7 +13,7 @@ public class LowestCatcher extends ChannelDuplexHandler {
 		ctx.close();
 	}
 
-	SystemLogger logger;
+	SimpleLogger logger;
 
 	/*
 	 * @Override public void connect(ChannelHandlerContext ctx, SocketAddress
@@ -35,7 +35,7 @@ public class LowestCatcher extends ChannelDuplexHandler {
 	 */
 	public LowestCatcher(String logger) {
 		super();
-		this.logger = new SystemLogger(logger);
+		this.logger = new SimpleLogger(logger);
 	}
 
 	// ... override more outbound methods to handle their exceptions as well

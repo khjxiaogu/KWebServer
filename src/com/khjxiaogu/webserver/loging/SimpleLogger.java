@@ -12,7 +12,7 @@ import org.fusesource.jansi.AnsiConsole;
 
 import com.khjxiaogu.webserver.WebServerException;
 
-public class SystemLogger {
+public class SimpleLogger {
 	private final static SimpleDateFormat format = new SimpleDateFormat("hh:mm:ss"); //$NON-NLS-1$
 
 	public static enum Level {
@@ -59,15 +59,15 @@ public class SystemLogger {
 	PrintStream out;
 	public void setOut(PrintStream out) { this.out = out; }
 	
-	public SystemLogger(String name) {
+	public SimpleLogger(String name) {
 		out=System.out;
 		this.name = name;
 		if (name == null) { name = LogMessages.getString("logger.unknown"); } //$NON-NLS-1$
 	}
 	private static class DummyPrintWriter extends PrintWriter{
 		public DummyPrintWriter(){ super(nullstream); }
-		SystemLogger logger;
-		public DummyPrintWriter(SystemLogger logger, Level level) {
+		SimpleLogger logger;
+		public DummyPrintWriter(SimpleLogger logger, Level level) {
 			this();
 			this.logger = logger;
 			this.level = level;
@@ -83,8 +83,8 @@ public class SystemLogger {
 	private static class DummyAsPrintWriter extends PrintWriter{
 		public DummyAsPrintWriter(){ super(nullstream); }
 		String head;
-		SystemLogger logger;
-		public DummyAsPrintWriter(SystemLogger logger,String head) {
+		SimpleLogger logger;
+		public DummyAsPrintWriter(SimpleLogger logger,String head) {
 			super(nullstream);
 			this.head=head;
 			this.logger=logger;
@@ -112,7 +112,7 @@ public class SystemLogger {
 		printFullStackTrace(l,t);
 	}
 	private static void handleException(Throwable t) {
-		handleException(t,new Throwable().getStackTrace());
+		handleException(t,Thread.currentThread().getStackTrace());
 	}
 	private static void handleException(Throwable t,StackTraceElement[] current) {
 		if(t==null)return;
@@ -132,17 +132,17 @@ public class SystemLogger {
 	}
 	public void printFullStackTrace(Level l,Throwable t) {
 		if(t instanceof WebServerException&&t.getCause()!=null) {
-			t.getCause().printStackTrace(new DummyAsPrintWriter(this,doTranslateHeader(l,SystemLogger.format.format(new Date()),this.getQuoteName()+((WebServerException) t).getLoggers())));
+			t.getCause().printStackTrace(new DummyAsPrintWriter(this,doTranslateHeader(l,SimpleLogger.format.format(new Date()),this.getQuoteName()+((WebServerException) t).getLoggers())));
 		}else
 			t.printStackTrace(getForLevel(l));
 	}
 
 	public void log(Level l, String s) {
-		logInternal(doTranslateHeader(l, SystemLogger.format.format(new Date()),getQuoteName()), s);
+		logInternal(doTranslateHeader(l, SimpleLogger.format.format(new Date()),getQuoteName()), s);
 		
 	}
 	public void logAs(Level l,String as, String s) {
-		logInternal(doTranslateHeader(l,SystemLogger.format.format(new Date()), getQuoteName()+as),s);
+		logInternal(doTranslateHeader(l,SimpleLogger.format.format(new Date()), getQuoteName()+as),s);
 	}
 	public String doTranslateHeader(Level l,String date,String name) {
 		return String.format(l.format,date,name);
