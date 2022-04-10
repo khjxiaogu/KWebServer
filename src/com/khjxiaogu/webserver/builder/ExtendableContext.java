@@ -18,8 +18,6 @@
 package com.khjxiaogu.webserver.builder;
 
 import java.io.File;
-import java.lang.reflect.InvocationTargetException;
-
 import com.khjxiaogu.webserver.command.CommandDispatcher;
 import com.khjxiaogu.webserver.web.CallBack;
 import com.khjxiaogu.webserver.web.ContextHandler;
@@ -104,6 +102,7 @@ public interface ExtendableContext<T extends ExtendableContext<T>> extends Conte
 	 * @return return created dispatch <br>
 	 *         返回新的上下文对象
 	 */
+	@SuppressWarnings("unchecked")
 	default <Y extends ContextHandler<Y>> ServerContext<Y, T> createDispatch(Y dispatcher) {
 		return new ServerContext<>(dispatcher, (T) this, this.getDispatcher());
 	};
@@ -119,6 +118,7 @@ public interface ExtendableContext<T extends ExtendableContext<T>> extends Conte
 	 * @return return created context <br>
 	 *         返回子上下文
 	 */
+	@SuppressWarnings("unchecked")
 	default <Y extends ServerProvider> ProviderContext<Y, T> createDispatch(Y provider) {
 		return new ProviderContext<>(provider, (T) this, this.getDispatcher());
 	};
@@ -134,6 +134,7 @@ public interface ExtendableContext<T extends ExtendableContext<T>> extends Conte
 	 * @return return created context <br>
 	 *         返回子上下文
 	 */
+	@SuppressWarnings("unchecked")
 	default <Y extends CallBack> CallBackContext<T, Y> createDispatch(Y callback) {
 		return new CallBackContext<>(callback, (T) this, this.getDispatcher());
 	};
@@ -146,6 +147,7 @@ public interface ExtendableContext<T extends ExtendableContext<T>> extends Conte
 	 * @return return created context <br>
 	 *         返回子上下文
 	 */
+	@SuppressWarnings("unchecked")
 	default ServerContext<URIMatchDispatchHandler, T> createWrapper(ServiceClass obj) {
 		return new WrapperContext<>(new ServiceClassWrapper(obj), (T) this, this.getDispatcher());
 	};

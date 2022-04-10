@@ -17,8 +17,13 @@
  */
 package com.khjxiaogu.dao;
 
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+
 public interface StatementBuilder {
 	boolean execute();
 
 	String getSQL();
+	
+	PreparedStatement build() throws SQLException;
 }

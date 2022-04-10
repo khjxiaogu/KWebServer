@@ -18,7 +18,6 @@
 package com.khjxiaogu.webserver.web.lowlayer;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
@@ -28,16 +27,19 @@ import com.khjxiaogu.webserver.Utils;
 import com.khjxiaogu.webserver.WebServerException;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.DefaultHttpResponse;
 import io.netty.handler.codec.http.DefaultLastHttpContent;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpChunkedInput;
 import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.HttpVersion;
+import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketServerCompressionHandler;
 import io.netty.handler.stream.ChunkedFile;
 
 // TODO: Auto-generated Javadoc
@@ -227,7 +229,8 @@ public class Response {
 		 */
 		if (!f.exists())
 			return;
-		try(RandomAccessFile raf = new RandomAccessFile(f, "r");){
+		try{
+			RandomAccessFile raf = new RandomAccessFile(f, "r");
 			response.setStatus(HttpResponseStatus.valueOf(status));
 			HttpUtil.setContentLength(response, raf.length());
 			if (response.headers().get(HttpHeaderNames.CONTENT_TYPE) == null) {
@@ -243,8 +246,9 @@ public class Response {
 				buf.writeBytes(raf.getChannel(), (int) raf.length());
 				ex.write(response);
 				ex.writeAndFlush(new DefaultLastHttpContent(buf)).await();
+				raf.close();
 			}
-
+			written = true;
 		} catch (IOException | InterruptedException e) {
 			throw new WebServerException(e);
 		}

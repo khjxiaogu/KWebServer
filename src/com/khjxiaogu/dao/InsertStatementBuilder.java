@@ -32,6 +32,9 @@ public class InsertStatementBuilder implements InputStatement<InsertStatementBui
 			this.key = key;
 			this.data = data;
 		}
+		public InsertExpr(String key) {
+			this.key = key;
+		}
 	}
 
 	String table;
@@ -46,6 +49,9 @@ public class InsertStatementBuilder implements InputStatement<InsertStatementBui
 	@Override
 	public InsertStatementBuilder set(String key, Object val) { inserts.add(new InsertExpr(key,val));return this; }
 
+	@Override
+	public InsertStatementBuilder set(String key) { inserts.add(new InsertExpr(key));return this; }
+	
 	@Override
 	public String getSQL() {
 		StringBuilder sql = new StringBuilder("INSERT INTO");
@@ -84,5 +90,8 @@ public class InsertStatementBuilder implements InputStatement<InsertStatementBui
 		}
 		return false;
 	}
-
+	@Override
+	public PreparedStatement build() throws SQLException {
+		return conn.prepareStatement(getSQL());
+	}
 }

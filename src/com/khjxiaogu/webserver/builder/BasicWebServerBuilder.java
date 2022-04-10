@@ -18,8 +18,6 @@
 package com.khjxiaogu.webserver.builder;
 
 import java.io.File;
-import java.io.PrintStream;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Scanner;
 
 import javax.net.ssl.SSLEngine;
@@ -58,6 +56,8 @@ import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.codec.http.HttpServerKeepAliveHandler;
 import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketServerCompressionHandler;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.stream.ChunkedWriteHandler;
@@ -75,14 +75,15 @@ public class BasicWebServerBuilder implements CommandDispatcher, WebServerCreate
 	private SslContext slc;
 	private NettyHandlerBridge bridge;// main handler
 	private EventLoopGroup bossGroup = new NioEventLoopGroup(Runtime.getRuntime().availableProcessors() * 2 + 1);// the
-	                                                                                                             // recommended
-	                                                                                                             // best
-	                                                                                                             // number
+																													// recommended
+																													// best
+																													// number
 	private EventLoopGroup workerGroup = new NioEventLoopGroup(Runtime.getRuntime().availableProcessors() * 10 + 1);
 	private SimpleLogger logger = new SimpleLogger("服务器");
 	private File NotFound;
 	private Scanner scan;
 	private ChannelGroup opened = new DefaultChannelGroup(new UnorderedThreadPoolEventExecutor(2));
+
 	@Override
 	public BasicWebServerBuilder add(CommandHandler ch) {
 		cmds.add(ch);
@@ -97,7 +98,9 @@ public class BasicWebServerBuilder implements CommandDispatcher, WebServerCreate
 	 *         指令处理类
 	 */
 	@Override
-	public CommandDispatcher getCommands() { return cmds; }
+	public CommandDispatcher getCommands() {
+		return cmds;
+	}
 
 	/**
 	 * Gets the logger.<br>
@@ -107,7 +110,9 @@ public class BasicWebServerBuilder implements CommandDispatcher, WebServerCreate
 	 *         日志记录器
 	 */
 	@Override
-	public SimpleLogger getLogger() { return logger; }
+	public SimpleLogger getLogger() {
+		return logger;
+	}
 
 	private static class ConsoleCommandSender implements CommandSender {
 		private SimpleLogger console;
@@ -118,14 +123,19 @@ public class BasicWebServerBuilder implements CommandDispatcher, WebServerCreate
 		}
 
 		@Override
-		public void sendMessage(String msg) { console.info(msg); }
+		public void sendMessage(String msg) {
+			console.info(msg);
+		}
 
 		@Override
-		public String getUID() { return Utils.systemUID; }
+		public String getUID() {
+			return Utils.systemUID;
+		}
 
 	}
 
-	public BasicWebServerBuilder() {}
+	public BasicWebServerBuilder() {
+	}
 
 	/**
 	 * Builds a new BasicServerBuilder.<br>
@@ -134,7 +144,9 @@ public class BasicWebServerBuilder implements CommandDispatcher, WebServerCreate
 	 * @return return new BasicServerBuilder <br>
 	 *         返回这个类的实例
 	 */
-	public static BasicWebServerBuilder build() { return new BasicWebServerBuilder(); }
+	public static BasicWebServerBuilder build() {
+		return new BasicWebServerBuilder();
+	}
 
 	/**
 	 * Creates a URI root dispatcher.<br>
@@ -201,8 +213,8 @@ public class BasicWebServerBuilder implements CommandDispatcher, WebServerCreate
 	}
 
 	public RootContext<URIMatchDispatchHandler, BasicWebServerBuilder> createWrapperRoot(ServiceClass obj) {
-		RootContext<URIMatchDispatchHandler, BasicWebServerBuilder> rt = new RootContext<>(
-		        new ServiceClassWrapper(obj), this, cmds);
+		RootContext<URIMatchDispatchHandler, BasicWebServerBuilder> rt = new RootContext<>(new ServiceClassWrapper(obj),
+				this, cmds);
 		root = rt;
 		return rt;
 	}
@@ -288,18 +300,18 @@ public class BasicWebServerBuilder implements CommandDispatcher, WebServerCreate
 		if (slc != null) {
 			NettyHandlerBridge cbr = new NettyHandlerBridge(bridge).setHttps(true);
 			opened.add(new ServerBootstrap().group(bossGroup, workerGroup).channel(NioServerSocketChannel.class)
-			        .childHandler(new ChannelInitializer<SocketChannel>() {
-				        @Override
-				        public void initChannel(SocketChannel ch) {
-					        SSLEngine engine = slc.newEngine(ch.alloc());
-					        //engine.setEnabledProtocols(new String[] { "TLSv1.2" });
-					        ch.pipeline().addLast(new SslHandler(engine)).addLast(new HttpServerCodec())
-					                .addLast(new HttpContentCompressor()).addLast(new HttpServerKeepAliveHandler())
-					                .addLast(new LowestCatcher("HTTPS")).addLast(new HttpObjectAggregator(1024 * 1024))
-					                .addLast(new ChunkedWriteHandler()).addLast(new WebSocketServerCompressionHandler())
-					                .addLast(cbr);
-				        }
-			        }).bind(addr, port).sync().channel());
+					.childHandler(new ChannelInitializer<SocketChannel>() {
+						@Override
+						public void initChannel(SocketChannel ch) {
+							SSLEngine engine = slc.newEngine(ch.alloc());
+							// engine.setEnabledProtocols(new String[] { "TLSv1.2" });
+							ch.pipeline().addLast(new SslHandler(engine)).addLast(new HttpServerCodec())
+									.addLast("comp", new HttpContentCompressor())
+									.addLast(new HttpServerKeepAliveHandler()).addLast(new LowestCatcher("HTTPS"))
+									.addLast(new HttpObjectAggregator(1024 * 1024)).addLast("cw",new ChunkedWriteHandler())
+									.addLast(new WebSocketServerCompressionHandler()).addLast(cbr);
+						}
+					}).bind(addr, port).sync().channel());
 		}
 		return this;
 	}
@@ -326,16 +338,15 @@ public class BasicWebServerBuilder implements CommandDispatcher, WebServerCreate
 			return this;
 		NettyHandlerBridge cbr = new NettyHandlerBridge(bridge).setHttps(false);
 		opened.add(new ServerBootstrap().group(bossGroup, workerGroup).channel(NioServerSocketChannel.class)
-		        .childHandler(new ChannelInitializer<SocketChannel>() {
-			        @Override
-			        public void initChannel(SocketChannel ch) {
-				        ch.pipeline().addLast(new HttpServerCodec())
-				                .addLast(new HttpContentCompressor()).addLast(new HttpServerKeepAliveHandler())
-				                .addLast(new LowestCatcher("HTTP")).addLast(new HttpObjectAggregator(1024 * 1024))
-				                .addLast(new ChunkedWriteHandler()).addLast(new WebSocketServerCompressionHandler())
-				                .addLast(cbr);
-			        }
-		        }).bind(addr, port).sync().channel());
+				.childHandler(new ChannelInitializer<SocketChannel>() {
+					@Override
+					public void initChannel(SocketChannel ch) {
+						ch.pipeline().addLast("b", new HttpServerCodec()).addLast("comp", new HttpContentCompressor())
+								.addLast(new HttpServerKeepAliveHandler()).addLast(new LowestCatcher("HTTP"))
+								.addLast(new HttpObjectAggregator(1024 * 1024)).addLast("cw",new ChunkedWriteHandler())
+								.addLast(new WebSocketServerCompressionHandler()).addLast(cbr);
+					}
+				}).bind(addr, port).sync().channel());
 		return this;
 	}
 
@@ -364,14 +375,16 @@ public class BasicWebServerBuilder implements CommandDispatcher, WebServerCreate
 			opened.newCloseFuture().await();
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
-			throw new WebServerException(e,logger);
+			throw new WebServerException(e, logger);
 		}
 		return this;
 	}
 
 	@Override
 	public void shutdown() {
-		if (scan != null) { scan.close(); }
+		if (scan != null) {
+			scan.close();
+		}
 		bossGroup.shutdownGracefully();
 		workerGroup.shutdownGracefully();
 	}
@@ -426,7 +439,9 @@ public class BasicWebServerBuilder implements CommandDispatcher, WebServerCreate
 	}
 
 	@Override
-	public boolean dispatchCommand(String msg, CommandSender sender) { return cmds.dispatchCommand(msg, sender); }
+	public boolean dispatchCommand(String msg, CommandSender sender) {
+		return cmds.dispatchCommand(msg, sender);
+	}
 
 	@Override
 	public BasicWebServerBuilder add(String label, CommandExp ch, String help) {

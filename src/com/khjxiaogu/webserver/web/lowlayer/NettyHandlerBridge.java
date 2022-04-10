@@ -22,7 +22,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import com.khjxiaogu.webserver.WebServerException;
 import com.khjxiaogu.webserver.loging.SimpleLogger;
 
 import io.netty.channel.ChannelFuture;
@@ -131,5 +130,6 @@ public class NettyHandlerBridge extends SimpleChannelInboundHandler<FullHttpRequ
 		ChannelFuture flushPromise = ctx.writeAndFlush(response);
 		if (!keepAlive) { flushPromise.addListener(ChannelFutureListener.CLOSE); }
 	}
+
 
 }

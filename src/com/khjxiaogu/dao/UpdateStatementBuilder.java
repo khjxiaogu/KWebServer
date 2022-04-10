@@ -33,21 +33,25 @@ public class UpdateStatementBuilder implements InputStatement<UpdateStatementBui
 	}
 
 	class UpdateExpr {
-		String key = null;
 		Object val;
-		String expr = "?";
+		String expr = "";
 
-		public UpdateExpr(String expr) { this.expr = expr; }
+		public UpdateExpr(String key) { this.expr = key+" = ?"; }
+		
 
 		public UpdateExpr(String key, Object val) {
-			this.key = key;
+			this(key);
 			this.val = val;
 		}
 
 		public UpdateExpr(String key, Object val, String expr) {
-			this.key = key;
+			if(key!=null)
+				this.expr = key+" = ";
 			this.val = val;
-			this.expr = expr;
+			if(expr!=null)
+				this.expr += expr;
+			else
+				this.expr += "?";
 		}
 	}
 
@@ -58,12 +62,15 @@ public class UpdateStatementBuilder implements InputStatement<UpdateStatementBui
 		inserts.add(new UpdateExpr(key, val));
 		return this;
 	}
-
-	public UpdateStatementBuilder set(String expr) {
-		inserts.add(new UpdateExpr(expr));
+	@Override
+	public UpdateStatementBuilder set(String key) {
+		inserts.add(new UpdateExpr(key));
 		return this;
 	}
-
+	public UpdateStatementBuilder setExp(String expr) {
+		inserts.add(new UpdateExpr(null,null,expr));
+		return this;
+	}
 	public UpdateStatementBuilder set(String key, Object val, String expr) {
 		inserts.add(new UpdateExpr(key, val, expr));
 		return this;
@@ -78,7 +85,6 @@ public class UpdateStatementBuilder implements InputStatement<UpdateStatementBui
 		if (it.hasNext()) {
 			while (true) {
 				UpdateExpr expr = it.next();
-				if (expr.key != null) { sql.append(expr.key); sql.append(" = "); }
 				sql.append(expr.expr);
 				if (it.hasNext()) {
 					sql.append(", ");
@@ -101,6 +107,11 @@ public class UpdateStatementBuilder implements InputStatement<UpdateStatementBui
 			e.printStackTrace();
 		}
 		return false;
+	}
+
+	@Override
+	public PreparedStatement build() throws SQLException {
+		return conn.prepareStatement(getSQL());
 	}
 
 }

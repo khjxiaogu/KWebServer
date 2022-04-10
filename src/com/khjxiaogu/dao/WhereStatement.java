@@ -17,6 +17,8 @@
  */
 package com.khjxiaogu.dao;
 
+import java.util.List;
+
 public class WhereStatement {
 	class WhereExpr {
 		String key = null;
@@ -36,7 +38,19 @@ public class WhereStatement {
 			this.expr = expr;
 		}
 	}
-
+	class StatementRelation{
+		boolean and;
+		List<WhereExpr> exprs;
+		WhereStatement sup;
+		StatementRelation parent;
+		public StatementRelation and(String expr) {
+			if(and) {
+				exprs.add(new WhereExpr(expr));
+				return this;
+			}else
+				return new StatementRelation();
+		}
+	}
 	public WhereStatement() {}
 
 }
