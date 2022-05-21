@@ -39,6 +39,7 @@ import com.khjxiaogu.webserver.WebServerException;
 import com.khjxiaogu.webserver.annotations.Adapter;
 import com.khjxiaogu.webserver.annotations.Filter;
 import com.khjxiaogu.webserver.annotations.FilterClass;
+import com.khjxiaogu.webserver.annotations.FilterKV;
 import com.khjxiaogu.webserver.annotations.ForceProtocol;
 import com.khjxiaogu.webserver.annotations.GetAs;
 import com.khjxiaogu.webserver.annotations.GetBy;
@@ -96,7 +97,15 @@ public class ServiceClassWrapper extends URIMatchDispatchHandler {
 			}
 			for (FilterClass fc:fcannos) { 
 				try {
-					hfs.add(fc.value().getConstructor().newInstance());
+					FilterKV[] config=fc.config();
+					if(config==null||config.length==0)
+						hfs.add(fc.value().getConstructor().newInstance());
+					else {
+						Map<String,String> configm=new HashMap<>();
+						for(FilterKV fkv:config)
+							configm.put(fkv.key(),fkv.value());
+						hfs.add(fc.value().getConstructor(Map.class).newInstance(configm));
+					}
 				}catch(InvocationTargetException ite) {
 					throw new WebServerException(ite.getCause());
 				} catch (InstantiationException | IllegalAccessException | IllegalArgumentException

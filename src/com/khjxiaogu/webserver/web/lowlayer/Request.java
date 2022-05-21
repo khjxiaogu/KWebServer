@@ -160,6 +160,7 @@ public class Request {
 	public InetSocketAddress getRemote() { return (InetSocketAddress) ctx.channel().remoteAddress(); }
 
 	public String getQueryString() { return uri.getQuery(); }
+	public String getRawQueryString() { return uri.getRawQuery(); }
 
 	public HttpPostRequestDecoder getFullPost() { return new HttpPostRequestDecoder(new DefaultHttpDataFactory(false), fhr); }
 

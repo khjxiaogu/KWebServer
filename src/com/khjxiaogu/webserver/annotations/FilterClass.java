@@ -37,4 +37,5 @@ import com.khjxiaogu.webserver.wrappers.HttpFilter;
 @Repeatable(FilterClasses.class)
 public @interface FilterClass {
 	public Class<? extends HttpFilter> value();
+	public FilterKV[] config() default {};
 }

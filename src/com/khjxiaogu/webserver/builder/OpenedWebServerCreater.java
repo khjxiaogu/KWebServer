@@ -119,6 +119,6 @@ public interface OpenedWebServerCreater {
 
 	void shutdown();
 
-	WebServerCreater closeSync();
+	WebServerCreater closeSync() throws InterruptedException;
 
 }
