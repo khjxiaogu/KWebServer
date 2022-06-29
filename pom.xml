@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.khjxiaogu</groupId>
 	<artifactId>KWebServer</artifactId>
-	<version>0.0.13</version>
+	<version>0.0.15</version>
 	<name>kwebserver</name>
 	<description>A simple light-weighted webserver.</description>
 	<url>http://khjxiaogu.github.io/KWebServer</url>
@@ -30,6 +30,11 @@
 	<build>
 		<finalName>${project.name}-${project.version}</finalName>
 		<sourceDirectory>src</sourceDirectory>
+		<resources>
+     <resource>
+       <directory>resource</directory>
+     </resource>
+   </resources>
 		<plugins>
 			<plugin>
 				<groupId>org.sonatype.plugins</groupId>
