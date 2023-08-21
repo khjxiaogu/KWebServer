@@ -40,14 +40,6 @@ public class WebServerException extends RuntimeException {
 
 	public WebServerException(String message, Throwable cause) {
 		super(message);
-		while (true) {
-			if (cause instanceof InvocationTargetException) {
-				cause = cause.getCause();
-			} else if (cause instanceof WebServerException) {
-				this.setSource(((WebServerException) cause).getLoggers());
-			} else
-				break;
-		}
 		this.initCause(cause);
 	}
 
@@ -55,19 +47,22 @@ public class WebServerException extends RuntimeException {
 
 	public WebServerException(Throwable cause) {
 		super();
-		while (true) {
-			if (cause instanceof InvocationTargetException) {
-				cause = cause.getCause();
-			} else if (cause instanceof WebServerException) {
-				this.setSource(((WebServerException) cause).getLoggers());
-			} else
-				break;
-		}
 		this.initCause(cause);
 	}
 
+	public WebServerException(Throwable cause,String message, SimpleLogger logger) {
+		super(message);
+		this.initCause(cause);
+		setLogger(logger);
+	}
 	public WebServerException(Throwable cause, SimpleLogger logger) {
 		super();
+		this.initCause(cause);
+		setLogger(logger);
+	}
+
+	@Override
+	public synchronized Throwable initCause(Throwable cause) {
 		while (true) {
 			if (cause instanceof InvocationTargetException) {
 				cause = cause.getCause();
@@ -76,7 +71,7 @@ public class WebServerException extends RuntimeException {
 			} else
 				break;
 		}
-		this.initCause(cause);
-		setLogger(logger);
+		return super.initCause(cause);
 	}
+
 }

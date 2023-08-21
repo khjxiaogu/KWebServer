@@ -21,5 +21,5 @@ import com.khjxiaogu.webserver.web.ServiceClass;
 import com.khjxiaogu.webserver.web.lowlayer.Request;
 
 public interface InAdapter {
-	public Object handle(Request req, ServiceClass context) throws Exception;
+	public Object handle(Request req, Class<?> paramClass, ServiceClass context) throws Exception;
 }

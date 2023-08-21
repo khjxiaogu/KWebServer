@@ -26,6 +26,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.PingWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.PongWebSocketFrame;
@@ -58,6 +59,8 @@ public class WebsocketTracker extends SimpleChannelInboundHandler<WebSocketFrame
 			ctx.channel().writeAndFlush(new PongWebSocketFrame(wsf.content().retain()));
 		} else if (wsf instanceof TextWebSocketFrame) {
 			ev.onMessage(ctx.channel(), ((TextWebSocketFrame) wsf).text());
+		}else if(wsf instanceof BinaryWebSocketFrame) {
+			
 		} else if (wsf instanceof CloseWebSocketFrame) { ctx.channel().close(); }
 		return;
 	}

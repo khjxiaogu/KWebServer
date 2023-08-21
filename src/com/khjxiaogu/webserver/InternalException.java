@@ -30,4 +30,8 @@ public class InternalException extends WebServerException {
 	public InternalException(Throwable cause) { super(cause); }
 
 	public InternalException(Throwable cause, SimpleLogger logger) { super(cause, logger); }
+
+	public InternalException(Throwable cause, String message, SimpleLogger logger) {
+		super(cause, message, logger);
+	}
 }

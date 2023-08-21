@@ -44,6 +44,7 @@ import com.khjxiaogu.webserver.annotations.ForceProtocol;
 import com.khjxiaogu.webserver.annotations.GetAs;
 import com.khjxiaogu.webserver.annotations.GetBy;
 import com.khjxiaogu.webserver.annotations.GetByStr;
+import com.khjxiaogu.webserver.annotations.GsonQuery;
 import com.khjxiaogu.webserver.annotations.Header;
 import com.khjxiaogu.webserver.annotations.HttpMethod;
 import com.khjxiaogu.webserver.annotations.HttpPath;
@@ -58,6 +59,7 @@ import com.khjxiaogu.webserver.web.ServiceClass;
 import com.khjxiaogu.webserver.web.URIMatchDispatchHandler;
 import com.khjxiaogu.webserver.web.lowlayer.Request;
 import com.khjxiaogu.webserver.web.lowlayer.Response;
+import com.khjxiaogu.webserver.wrappers.inadapters.GsonQueryValue;
 import com.khjxiaogu.webserver.wrappers.inadapters.HeaderValue;
 import com.khjxiaogu.webserver.wrappers.inadapters.PostQueryValue;
 import com.khjxiaogu.webserver.wrappers.inadapters.QueryValue;
@@ -339,40 +341,44 @@ class MethodServiceProvider implements CallBack {
 }
 
 class MethodAdaptProvider extends MethodServiceProvider {
-	private InAdapter[] paramadap;
+	private ParamAdapterWrapper[] paramadap;
 	private OutAdapter resultadap;
 
 	@FunctionalInterface
-	interface AnnotationHandler {
-		InAdapter handle(Annotation anno) throws Exception;
+	interface AnnotationHandler<T extends Annotation> {
+		InAdapter handle(T anno) throws Exception;
 	}
 
-	private static Map<Class<? extends Annotation>, AnnotationHandler> handlers = new HashMap<>();
-	static {
-		MethodAdaptProvider.handlers.put(GetBy.class, anno -> ((GetBy) anno).value().getConstructor().newInstance());
-		MethodAdaptProvider.handlers.put(GetByStr.class,
-		        anno -> ((GetByStr) anno).value().getConstructor(String.class).newInstance(((GetByStr) anno).param()));
-		MethodAdaptProvider.handlers.put(Query.class, anno -> new QueryValue(((Query) anno).value()));
-		MethodAdaptProvider.handlers.put(GetAs.class, anno -> InAdapterManager.getAdapter(((GetAs) anno).value()));
-		MethodAdaptProvider.handlers.put(PostQuery.class, anno -> new PostQueryValue(((PostQuery) anno).value()));
-		MethodAdaptProvider.handlers.put(Header.class, anno -> new HeaderValue(((Header) anno).value()));
+	private static Map<Class<? extends Annotation>, AnnotationHandler<? extends Annotation>> handlers = new HashMap<>();
+	public static <T extends Annotation> void registerHanlder(Class<T> annoClass,AnnotationHandler<T> handler) {
+		handlers.put(annoClass, handler);
 	}
+	static {
+		registerHanlder(GetBy.class, anno -> anno.value().getConstructor().newInstance());
+		registerHanlder(GetByStr.class, anno -> anno.value().getConstructor(String.class).newInstance(anno.param()));
+		registerHanlder(Query.class, anno -> new QueryValue(anno.value()));
+		registerHanlder(GetAs.class, anno -> InAdapterManager.getAdapter(anno.value()));
+		registerHanlder(PostQuery.class, anno -> new PostQueryValue(anno.value()));
+		registerHanlder(Header.class, anno -> new HeaderValue(anno.value()));
+		registerHanlder(GsonQuery.class, anno -> new GsonQueryValue(anno.value()));
+	}
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public MethodAdaptProvider(Method met, ServiceClass objthis, HttpFilter[] filters){
 		super(met, objthis, filters);
-		paramadap = new InAdapter[met.getParameterCount()];
+		paramadap = new ParamAdapterWrapper[met.getParameterCount()];
 		int i = 0;
 		for (Parameter param : met.getParameters()) {
+			
 			Annotation[] annos = param.getAnnotations();
 			for (Annotation anno : annos) {
 				AnnotationHandler ah = MethodAdaptProvider.handlers.get(anno.annotationType());
 				if (ah != null) {
 					try {
-						paramadap[i] = ah.handle(anno);
+						paramadap[i] = new ParamAdapterWrapper(param,ah.handle(anno));
 					}catch(InvocationTargetException ite) {
-						throw new InternalException(ite.getCause(),objthis.getLogger());
+						throw new InternalException(ite.getCause(),"Error when creating param handler "+paramadap[i].paramName+" of "+met.getName(),objthis.getLogger());
 					} catch (Exception e) {
-						// TODO Auto-generated catch block
-						throw new InternalException(e,objthis.getLogger());
+						throw new InternalException(e,"Error when creating param handler "+paramadap[i].paramName+" of "+met.getName(),objthis.getLogger());
 					}
 				}
 			}
@@ -381,11 +387,11 @@ class MethodAdaptProvider extends MethodServiceProvider {
 		try {
 			resultadap = met.getAnnotation(Adapter.class).value().getConstructor().newInstance();
 		}catch(InvocationTargetException ite){
-			throw new WebServerException(ite.getCause());
+			throw new InternalException("Error when creating result handler of "+met.getName(),ite.getCause());
 		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException 
 		        | NoSuchMethodException | SecurityException e) {
 			// TODO Auto-generated catch block
-			throw new WebServerException(e);
+			throw new InternalException("Error when creating result handler of "+met.getName(),e);
 		}
 	}
 
@@ -412,7 +418,7 @@ class MethodAdaptProvider extends MethodServiceProvider {
 					}catch(InvocationTargetException ite) {
 						throw ite.getCause();
 					} catch(Exception e){
-						objthis.getLogger().error("error when processing param "+i);
+						objthis.getLogger().error("error when processing param "+paramadap[i].paramName);
 						throw e;
 					}
 				} else {

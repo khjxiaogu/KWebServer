@@ -15,15 +15,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.khjxiaogu.webserver.wrappers;
+package com.khjxiaogu.webserver.wrappers.inadapters;
 
-import com.khjxiaogu.webserver.web.ServiceClass;
+import com.google.gson.Gson;
 import com.khjxiaogu.webserver.web.lowlayer.Request;
+import com.khjxiaogu.webserver.wrappers.StaticInStringAdapter;
 
-public abstract class StaticInAdapter implements InAdapter {
-
+public class GsonQueryValue extends StaticInStringAdapter {
+	public GsonQueryValue(String key) { super(key); }
+	Gson gs=new Gson();
 	@Override
-	public Object handle(Request req, Class<?> paramClass, ServiceClass context) throws Exception { return handle(req,paramClass); }
-	public Object handle(Request req, Class<?> paramClass) throws Exception{return handle(req);};
-	public Object handle(Request req) throws Exception{return null;};
+	public Object handle(Request req,Class<?> paramClass) throws Exception { return gs.fromJson(req.getQuery().get(key),paramClass); }
+
 }

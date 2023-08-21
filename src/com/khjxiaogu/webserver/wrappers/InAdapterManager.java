@@ -34,7 +34,7 @@ public final class InAdapterManager {
 		}
 
 		@Override
-		public Object handle(Request req, ServiceClass ctx) throws Exception { return intern.handle(req, ctx); }
+		public Object handle(Request req, Class<?> paramClass, ServiceClass ctx) throws Exception { return intern.handle(req, paramClass, ctx); }
 	}
 
 	static Map<String, InAdapter> registry = new ConcurrentHashMap<>();

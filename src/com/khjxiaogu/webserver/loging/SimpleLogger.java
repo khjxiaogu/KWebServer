@@ -24,6 +24,9 @@ import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
 
@@ -129,10 +132,12 @@ public class SimpleLogger {
 		printFullStackTrace(l,t);
 	}
 	private static void handleException(Throwable t) {
-		handleException(t,Thread.currentThread().getStackTrace());
+		handleException(t,Thread.currentThread().getStackTrace(),new HashSet<>());
 	}
-	private static void handleException(Throwable t,StackTraceElement[] current) {
+	private static void handleException(Throwable t,StackTraceElement[] current,Set<Throwable> set) {
 		if(t==null)return;
+		if(set.contains(t))return;
+		set.add(t);
 		StackTraceElement[] ot=t.getStackTrace();
         int m = ot.length - 1;
         int n = current.length - 1;
@@ -140,9 +145,9 @@ public class SimpleLogger {
             m--; n--;
         }
 		t.setStackTrace(Arrays.copyOfRange(ot,0, m+1));
-		handleException(t.getCause(),current);
+		handleException(t.getCause(),current,set);
 		for(Throwable ex:t.getSuppressed())
-			handleException(ex,current);
+			handleException(ex,current,set);
 	}
 	public void printFullStackTrace(Throwable t) {
 		printFullStackTrace(Level.ERROR,t);

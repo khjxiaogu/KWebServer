@@ -30,7 +30,8 @@ public abstract class StaticInStringAdapter extends InStringAdapter {
 	public StaticInStringAdapter(String key) { super(key); }
 
 	@Override
-	public Object handle(Request req, ServiceClass context) throws Exception { return handle(req); }
+	public Object handle(Request req, Class<?> paramClass, ServiceClass context) throws Exception { return handle(req,paramClass); }
+	public Object handle(Request req, Class<?> paramClass) throws Exception { return handle(req); }
 
-	public abstract Object handle(Request req) throws Exception;
+	public Object handle(Request req) throws Exception{ return null; };
 }

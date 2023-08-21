@@ -15,15 +15,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.khjxiaogu.webserver.wrappers;
+package com.khjxiaogu.webserver.annotations;
 
-import com.khjxiaogu.webserver.web.ServiceClass;
-import com.khjxiaogu.webserver.web.lowlayer.Request;
+import static java.lang.annotation.ElementType.PARAMETER;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-public abstract class StaticInAdapter implements InAdapter {
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 
-	@Override
-	public Object handle(Request req, Class<?> paramClass, ServiceClass context) throws Exception { return handle(req,paramClass); }
-	public Object handle(Request req, Class<?> paramClass) throws Exception{return handle(req);};
-	public Object handle(Request req) throws Exception{return null;};
+@Retention(RUNTIME)
+@Target(PARAMETER)
+public @interface GsonQuery {
+	public String value();
 }
