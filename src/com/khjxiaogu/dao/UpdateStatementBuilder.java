@@ -57,7 +57,6 @@ public class UpdateStatementBuilder implements InputStatement<UpdateStatementBui
 
 	protected ArrayList<UpdateExpr> inserts = new ArrayList<>();
 
-	@Override
 	public UpdateStatementBuilder set(String key, Object val) {
 		inserts.add(new UpdateExpr(key, val));
 		return this;

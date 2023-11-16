@@ -23,7 +23,7 @@ public class WhereStatement {
 	class WhereExpr {
 		String key = null;
 		Object val;
-		String expr = "?";
+		String expr = "= ?";
 
 		public WhereExpr(String expr) { this.expr = expr; }
 

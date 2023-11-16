@@ -24,33 +24,18 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 public class InsertStatementBuilder implements InputStatement<InsertStatementBuilder> {
-	class InsertExpr {
-		String key;
-		Object data;
-
-		public InsertExpr(String key, Object data) {
-			this.key = key;
-			this.data = data;
-		}
-		public InsertExpr(String key) {
-			this.key = key;
-		}
-	}
 
 	String table;
 	Connection conn;
-	protected ArrayList<InsertExpr> inserts = new ArrayList<>();
-
+	protected ArrayList<String> inserts = new ArrayList<>();
 	public InsertStatementBuilder(String table, Connection conn) {
 		this.table = table;
 		this.conn = conn;
 	}
 
-	@Override
-	public InsertStatementBuilder set(String key, Object val) { inserts.add(new InsertExpr(key,val));return this; }
 
 	@Override
-	public InsertStatementBuilder set(String key) { inserts.add(new InsertExpr(key));return this; }
+	public InsertStatementBuilder set(String key) { inserts.add(key);return this; }
 	
 	@Override
 	public String getSQL() {
@@ -58,11 +43,11 @@ public class InsertStatementBuilder implements InputStatement<InsertStatementBui
 		sql.append(table);
 		sql.append("(");
 		StringBuilder datas = new StringBuilder("(");
-		Iterator<InsertExpr> it = inserts.iterator();
+		Iterator<String> it = inserts.iterator();
 		if (it.hasNext()) {
 			while (true) {
-				InsertExpr expr = it.next();
-				if (expr.key != null) { sql.append(expr.key); }
+				String expr = it.next();
+				sql.append(expr);
 				datas.append("?");
 				if (it.hasNext()) {
 					sql.append(", ");
@@ -78,11 +63,11 @@ public class InsertStatementBuilder implements InputStatement<InsertStatementBui
 	}
 
 	@Override
-	public boolean execute() {
+	public boolean execute(Object[] data) {
 
 		try (PreparedStatement ps = conn.prepareStatement(getSQL())) {
 			int len = inserts.size();
-			for (int i = 0; i < len; i++) { ps.setObject(i, inserts.get(i).data); }
+			for (int i = 0; i < len; i++) { ps.setObject(i+1, data[i]); }
 			return ps.executeUpdate() > 0;
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
@@ -93,5 +78,12 @@ public class InsertStatementBuilder implements InputStatement<InsertStatementBui
 	@Override
 	public PreparedStatement build() throws SQLException {
 		return conn.prepareStatement(getSQL());
+	}
+
+
+	@Override
+	public boolean execute() {
+		// TODO Auto-generated method stub
+		return false;
 	}
 }
