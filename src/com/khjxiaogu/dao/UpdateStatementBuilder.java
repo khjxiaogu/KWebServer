@@ -33,21 +33,13 @@ public class UpdateStatementBuilder implements InputStatement<UpdateStatementBui
 	}
 
 	class UpdateExpr {
-		Object val;
 		String expr = "";
 
 		public UpdateExpr(String key) { this.expr = key+" = ?"; }
-		
 
-		public UpdateExpr(String key, Object val) {
-			this(key);
-			this.val = val;
-		}
-
-		public UpdateExpr(String key, Object val, String expr) {
+		public UpdateExpr(String key, String expr) {
 			if(key!=null)
 				this.expr = key+" = ";
-			this.val = val;
 			if(expr!=null)
 				this.expr += expr;
 			else
@@ -56,22 +48,13 @@ public class UpdateStatementBuilder implements InputStatement<UpdateStatementBui
 	}
 
 	protected ArrayList<UpdateExpr> inserts = new ArrayList<>();
-
-	public UpdateStatementBuilder set(String key, Object val) {
-		inserts.add(new UpdateExpr(key, val));
-		return this;
-	}
 	@Override
 	public UpdateStatementBuilder set(String key) {
 		inserts.add(new UpdateExpr(key));
 		return this;
 	}
-	public UpdateStatementBuilder setExp(String expr) {
-		inserts.add(new UpdateExpr(null,null,expr));
-		return this;
-	}
-	public UpdateStatementBuilder set(String key, Object val, String expr) {
-		inserts.add(new UpdateExpr(key, val, expr));
+	public UpdateStatementBuilder set(String key, String expr) {
+		inserts.add(new UpdateExpr(key, expr));
 		return this;
 	}
 
@@ -98,11 +81,8 @@ public class UpdateStatementBuilder implements InputStatement<UpdateStatementBui
 	@Override
 	public boolean execute() {
 		try (PreparedStatement ps = conn.prepareStatement(getSQL())) {
-			int len = inserts.size();
-			for (int i = 0; i < len; i++) { ps.setObject(i, inserts.get(i).val); }
 			return ps.executeUpdate() > 0;
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return false;
@@ -111,6 +91,17 @@ public class UpdateStatementBuilder implements InputStatement<UpdateStatementBui
 	@Override
 	public PreparedStatement build() throws SQLException {
 		return conn.prepareStatement(getSQL());
+	}
+	@Override
+	public boolean execute(Object[] data) {
+		try (PreparedStatement ps = conn.prepareStatement(getSQL())) {
+			int len = data.length;
+			for (int i = 0; i < len; i++) { ps.setObject(i+1, data[i]); }
+			return ps.executeUpdate() > 0;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return false;
 	}
 
 }

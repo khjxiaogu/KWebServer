@@ -27,12 +27,7 @@ public class WhereStatement {
 
 		public WhereExpr(String expr) { this.expr = expr; }
 
-		public WhereExpr(String key, Object val) {
-			this.key = key;
-			this.val = val;
-		}
-
-		public WhereExpr(String key, Object val, String expr) {
+		public WhereExpr(String key,  String expr) {
 			this.key = key;
 			this.val = val;
 			this.expr = expr;

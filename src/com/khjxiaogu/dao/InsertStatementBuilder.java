@@ -24,10 +24,24 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 public class InsertStatementBuilder implements InputStatement<InsertStatementBuilder> {
-
+	private class InsertPair{
+		String key;
+		String expr;
+		public InsertPair(String key, String expr) {
+			super();
+			this.key = key;
+			this.expr = expr;
+		}
+		public InsertPair(String key) {
+			super();
+			this.key = key;
+			this.expr="?";
+		}
+		
+	}
 	String table;
 	Connection conn;
-	protected ArrayList<String> inserts = new ArrayList<>();
+	protected ArrayList<InsertPair> inserts = new ArrayList<>();
 	public InsertStatementBuilder(String table, Connection conn) {
 		this.table = table;
 		this.conn = conn;
@@ -35,26 +49,29 @@ public class InsertStatementBuilder implements InputStatement<InsertStatementBui
 
 
 	@Override
-	public InsertStatementBuilder set(String key) { inserts.add(key);return this; }
+	public InsertStatementBuilder set(String key) { inserts.add(new InsertPair(key));return this; }
+	
+	@Override
+	public InsertStatementBuilder set(String key,String expr) { inserts.add(new InsertPair(key,expr));return this; }
 	
 	@Override
 	public String getSQL() {
-		StringBuilder sql = new StringBuilder("INSERT INTO");
+		StringBuilder sql = new StringBuilder("INSERT INTO ");
 		sql.append(table);
 		sql.append("(");
 		StringBuilder datas = new StringBuilder("(");
-		Iterator<String> it = inserts.iterator();
+		Iterator<InsertPair> it = inserts.iterator();
 		if (it.hasNext()) {
 			while (true) {
-				String expr = it.next();
-				sql.append(expr);
-				datas.append("?");
+				InsertPair expr = it.next();
+				sql.append(expr.key);
+				datas.append(expr.expr);
 				if (it.hasNext()) {
 					sql.append(", ");
 					datas.append(",");
 				} else {
-					sql.append(") VALUES");
-					sql.append(datas.toString());
+					sql.append(") VALUES ");
+					sql.append(datas.append(")").toString());
 					break;
 				}
 			}
@@ -66,7 +83,7 @@ public class InsertStatementBuilder implements InputStatement<InsertStatementBui
 	public boolean execute(Object[] data) {
 
 		try (PreparedStatement ps = conn.prepareStatement(getSQL())) {
-			int len = inserts.size();
+			int len = data.length;
 			for (int i = 0; i < len; i++) { ps.setObject(i+1, data[i]); }
 			return ps.executeUpdate() > 0;
 		} catch (SQLException e) {
@@ -84,6 +101,12 @@ public class InsertStatementBuilder implements InputStatement<InsertStatementBui
 	@Override
 	public boolean execute() {
 		// TODO Auto-generated method stub
+		try (PreparedStatement ps = conn.prepareStatement(getSQL())) {
+			return ps.executeUpdate() > 0;
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		return false;
 	}
 }

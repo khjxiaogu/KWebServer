@@ -21,4 +21,6 @@ public interface InputStatement<T> extends StatementBuilder {
 
 	T set(String key);
 
+	T set(String key, String expr);
+
 }
