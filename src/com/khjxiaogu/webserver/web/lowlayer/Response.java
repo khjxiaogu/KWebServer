@@ -42,6 +42,7 @@ import io.netty.handler.codec.http.DefaultHttpResponse;
 import io.netty.handler.codec.http.DefaultLastHttpContent;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpChunkedInput;
+import io.netty.handler.codec.http.HttpContentCompressor;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpHeaders;
@@ -52,6 +53,7 @@ import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketServerCompressionHandler;
+import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.stream.ChunkedFile;
 import io.netty.handler.stream.ChunkedStream;
 
@@ -120,14 +122,16 @@ public class Response {
 			response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html; charset=UTF-8");
 		}
 		response.setStatus(HttpResponseStatus.valueOf(status));
-
+		compressed();
 		HttpUtil.setContentLength(response, content.length());
 		ex.write(response);
 		ex.writeAndFlush(new DefaultLastHttpContent(
 		        ex.alloc().buffer(content.length()).writeBytes(content.getBytes(StandardCharsets.UTF_8))));
 		written = true;
 	}
-
+	public void compressed() {
+		ex.pipeline().addAfter("b", "gzip", new HttpContentCompressor());
+	}
 	/**
 	 * Write to response.<br>
 	 * 回复
@@ -180,7 +184,14 @@ public class Response {
 		// ex.close();
 		written = true;
 	}
-
+	public void redirect(String url) {
+		response.setStatus(HttpResponseStatus.FOUND);
+		response.headers().set(HttpHeaderNames.LOCATION,url);
+		ex.write(response);
+		ex.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
+		// ex.close();
+		written = true;
+	}
 	/**
 	 * Set header.<br>
 	 * 设置回复头值
@@ -246,9 +257,11 @@ public class Response {
 			if(start<0) {
 				start=r.start+raf.length();
 			}
-			long len=r.end-r.start+1;
+			long len=0;
+			if(!r.isEmpty())
+				len=r.end-r.start+1;
 			long maxlen=raf.length()-start;
-			if(len==0||len>maxlen)
+			if(len<=0||len>maxlen)
 				len=maxlen;
 			
 			if(!r.isEmpty()) {
@@ -266,20 +279,22 @@ public class Response {
 			if (response.headers().get(HttpHeaderNames.CONTENT_TYPE) == null) {
 				String mime = Utils.getMime(f);
 				if (mime != null) { response.headers().set(HttpHeaderNames.CONTENT_TYPE, mime); }
+				compressed();
 			}
 			if(cor.method()==HttpMethod.HEAD) {
 				ex.write(response);
 				ex.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT).await();
 			}else
-			if (raf.length() > 102400) {
+			if (len > 102400||ex.pipeline().get(SslHandler.class) !=null||ex.pipeline().get(HttpContentCompressor.class)!=null) {
 				response.headers().set(HttpHeaderNames.CONTENT_ENCODING, "chunked");
 				ex.write(response);
 				ex.writeAndFlush(new HttpChunkedInput(new ChunkedFile(raf,start,len,8192)));
 			} else {
+				System.out.println("start:"+start+"len:"+len);
 				ex.write(response);
 				ex.write(new DefaultFileRegion(raf.getChannel(), start, len));
-				ex.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT).await();
-				raf.close();
+				ex.writeAndFlush(new DefaultLastHttpContent());
+				//raf.close();
 			}
 			written = true;
 		} catch (IOException | InterruptedException e) {

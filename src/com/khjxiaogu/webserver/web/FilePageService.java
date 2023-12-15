@@ -62,9 +62,22 @@ public class FilePageService implements CallBack {
 	@Override
 	public void call(Request req, Response res) {
 		File f = new File(dest, FilePageService.sanitizeUri(req.getCurrentPath()));
+		logger.info(FilePageService.sanitizeUri(req.getCurrentPath()));
+		logger.info(f.getAbsolutePath());
 		try {
-			if (f.isDirectory()) { f = new File(f, "index.html"); }
-			res.write(200, f);
+			
+			if (f.isDirectory()) {
+				f=new File(f,"index.html");
+				if(f.exists()) {
+					if(!req.getCurrentPath().endsWith("/")) {
+						res.redirect(FilePageService.sanitizeUri(req.getFullpath())+"/");
+					}else {
+						res.write(200, f);
+					}
+				}
+			}else {
+				res.write(200, f);
+			}
 		} catch (Exception ex) {
 			try {
 				res.write(500, ex.getMessage().getBytes("UTF-8"));
@@ -97,7 +110,7 @@ public class FilePageService implements CallBack {
 		} catch (URISyntaxException e) {
 		}*/
 		if (uri == null || uri.isEmpty() || uri.charAt(0) != '/')
-			return "/";
+			return "";
 
 		// Convert file separators.
 		uri = uri.replace('/', File.separatorChar);
@@ -106,9 +119,9 @@ public class FilePageService implements CallBack {
 		// You will have to do something serious in the production environment.
 		if (uri.contains(File.separator + '.') || uri.contains('.' + File.separator) || uri.charAt(0) == '.'
 		        || uri.charAt(uri.length() - 1) == '.' || FilePageService.INSECURE_URI.matcher(uri).matches())
-			return "/";
+			return "";
 
 		// Convert to absolute path.
-		return uri;
+		return uri.substring(1);
 	}
 }

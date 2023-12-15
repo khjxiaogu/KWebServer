@@ -341,7 +341,7 @@ public class BasicWebServerBuilder implements CommandDispatcher, WebServerCreate
 				.childHandler(new ChannelInitializer<SocketChannel>() {
 					@Override
 					public void initChannel(SocketChannel ch) {
-						ch.pipeline().addLast("b", new HttpServerCodec()).addLast(new HttpContentCompressor())
+						ch.pipeline().addLast("b", new HttpServerCodec())
 								.addLast(new HttpServerKeepAliveHandler()).addLast(new LowestCatcher("HTTP"))
 								.addLast(new HttpObjectAggregator(128*1024 * 1024)).addLast(new ChunkedWriteHandler())
 								.addLast(new WebSocketServerCompressionHandler()).addLast(cbr);
