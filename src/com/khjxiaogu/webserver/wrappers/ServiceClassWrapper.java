@@ -29,6 +29,7 @@ import java.security.InvalidParameterException;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.function.Function;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -59,6 +60,7 @@ import com.khjxiaogu.webserver.web.ServiceClass;
 import com.khjxiaogu.webserver.web.URIMatchDispatchHandler;
 import com.khjxiaogu.webserver.web.lowlayer.Request;
 import com.khjxiaogu.webserver.web.lowlayer.Response;
+import com.khjxiaogu.webserver.wrappers.inadapters.AutoQuery;
 import com.khjxiaogu.webserver.wrappers.inadapters.GsonQueryValue;
 import com.khjxiaogu.webserver.wrappers.inadapters.HeaderValue;
 import com.khjxiaogu.webserver.wrappers.inadapters.PostQueryValue;
@@ -73,7 +75,29 @@ public class ServiceClassWrapper extends URIMatchDispatchHandler {
 
 	private ServiceClass iobj;
 	private Map<String, ContextHandler<?>> paths = new HashMap<>();
-
+	@FunctionalInterface
+	interface AnnotationHandler<T extends Annotation> {
+		InAdapter handle(T anno) throws Exception;
+	}
+	static Map<Class<? extends Annotation>, AnnotationHandler<? extends Annotation>> handlers = new HashMap<>();
+	public static <T extends Annotation> void registerHanlder(Class<T> annoClass,AnnotationHandler<T> handler) {
+		handlers.put(annoClass, handler);
+	}
+	
+	static Map<Class<?>, Function<Parameter,InAdapter>> typehandlers = new HashMap<>();
+	public static void registerTypeHanlder(Class<?> annoClass,Function<Parameter,InAdapter> handler) {
+		typehandlers.put(annoClass, handler);
+	}
+	static {
+		registerHanlder(GetBy.class, anno -> anno.value().getConstructor().newInstance());
+		registerHanlder(GetByStr.class, anno -> anno.value().getConstructor(String.class).newInstance(anno.param()));
+		registerHanlder(Query.class, anno -> new QueryValue(anno.value()));
+		registerHanlder(GetAs.class, anno -> InAdapterManager.getAdapter(anno.value()));
+		registerHanlder(PostQuery.class, anno -> new PostQueryValue(anno.value()));
+		registerHanlder(Header.class, anno -> new HeaderValue(anno.value()));
+		registerHanlder(GsonQuery.class, anno -> new GsonQueryValue(anno.value()));
+		registerTypeHanlder(String.class,par -> new AutoQuery(par.getName()));
+	}
 	public ServiceClassWrapper(ServiceClass object){
 		iobj = object;
 		Class<?> clazz = object.getClass();
@@ -344,37 +368,26 @@ class MethodAdaptProvider extends MethodServiceProvider {
 	private ParamAdapterWrapper[] paramadap;
 	private OutAdapter resultadap;
 
-	@FunctionalInterface
-	interface AnnotationHandler<T extends Annotation> {
-		InAdapter handle(T anno) throws Exception;
-	}
 
-	private static Map<Class<? extends Annotation>, AnnotationHandler<? extends Annotation>> handlers = new HashMap<>();
-	public static <T extends Annotation> void registerHanlder(Class<T> annoClass,AnnotationHandler<T> handler) {
-		handlers.put(annoClass, handler);
-	}
-	static {
-		registerHanlder(GetBy.class, anno -> anno.value().getConstructor().newInstance());
-		registerHanlder(GetByStr.class, anno -> anno.value().getConstructor(String.class).newInstance(anno.param()));
-		registerHanlder(Query.class, anno -> new QueryValue(anno.value()));
-		registerHanlder(GetAs.class, anno -> InAdapterManager.getAdapter(anno.value()));
-		registerHanlder(PostQuery.class, anno -> new PostQueryValue(anno.value()));
-		registerHanlder(Header.class, anno -> new HeaderValue(anno.value()));
-		registerHanlder(GsonQuery.class, anno -> new GsonQueryValue(anno.value()));
-	}
+
+	
+
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public MethodAdaptProvider(Method met, ServiceClass objthis, HttpFilter[] filters){
 		super(met, objthis, filters);
 		paramadap = new ParamAdapterWrapper[met.getParameterCount()];
 		int i = 0;
-		for (Parameter param : met.getParameters()) {
+		outer:for (Parameter param : met.getParameters()) {
 			
 			Annotation[] annos = param.getAnnotations();
+			
 			for (Annotation anno : annos) {
-				AnnotationHandler ah = MethodAdaptProvider.handlers.get(anno.annotationType());
+				ServiceClassWrapper.AnnotationHandler ah = ServiceClassWrapper.handlers.get(anno.annotationType());
 				if (ah != null) {
 					try {
 						paramadap[i] = new ParamAdapterWrapper(param,ah.handle(anno));
+						i++;
+						continue outer;
 					}catch(InvocationTargetException ite) {
 						throw new InternalException(ite.getCause(),"Error when creating param handler "+paramadap[i].paramName+" of "+met.getName(),objthis.getLogger());
 					} catch (Exception e) {
@@ -382,7 +395,11 @@ class MethodAdaptProvider extends MethodServiceProvider {
 					}
 				}
 			}
-			i++;
+			Function<Parameter,InAdapter> hand=ServiceClassWrapper.typehandlers.get(param.getClass());
+			if(hand!=null) {
+				paramadap[i] = new ParamAdapterWrapper(param,hand.apply(param));
+				i++;
+			}
 		}
 		try {
 			resultadap = met.getAnnotation(Adapter.class).value().getConstructor().newInstance();
