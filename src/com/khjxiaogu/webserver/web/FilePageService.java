@@ -62,8 +62,8 @@ public class FilePageService implements CallBack {
 	@Override
 	public void call(Request req, Response res) {
 		File f = new File(dest, FilePageService.sanitizeUri(req.getCurrentPath()));
-		logger.info(FilePageService.sanitizeUri(req.getCurrentPath()));
-		logger.info(f.getAbsolutePath());
+		//logger.info(FilePageService.sanitizeUri(req.getCurrentPath()));
+		//logger.info(f.getAbsolutePath());
 		try {
 			
 			if (f.isDirectory()) {

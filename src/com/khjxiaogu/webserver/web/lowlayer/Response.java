@@ -130,7 +130,8 @@ public class Response {
 		written = true;
 	}
 	public void compressed() {
-		ex.pipeline().addAfter("b", "gzip", new HttpContentCompressor());
+		if(ex.pipeline().get("gzip") == null)
+			ex.pipeline().addAfter("b", "gzip", new HttpContentCompressor());
 	}
 	/**
 	 * Write to response.<br>
@@ -278,8 +279,14 @@ public class Response {
 			HttpUtil.setContentLength(response, len);
 			if (response.headers().get(HttpHeaderNames.CONTENT_TYPE) == null) {
 				String mime = Utils.getMime(f);
-				if (mime != null) { response.headers().set(HttpHeaderNames.CONTENT_TYPE, mime); }
-				compressed();
+				if (mime != null) {
+					if(mime.startsWith("text")||mime.startsWith("application/json"))
+						compressed();
+					response.headers().set(HttpHeaderNames.CONTENT_TYPE, mime);
+				}else{
+					compressed();
+				}
+				//compressed();
 			}
 			if(cor.method()==HttpMethod.HEAD) {
 				ex.write(response);
@@ -287,10 +294,11 @@ public class Response {
 			}else
 			if (len > 102400||ex.pipeline().get(SslHandler.class) !=null||ex.pipeline().get(HttpContentCompressor.class)!=null) {
 				response.headers().set(HttpHeaderNames.CONTENT_ENCODING, "chunked");
+				//System.out.println("start:"+start+"len:"+len);
 				ex.write(response);
 				ex.writeAndFlush(new HttpChunkedInput(new ChunkedFile(raf,start,len,8192)));
 			} else {
-				System.out.println("start:"+start+"len:"+len);
+				//System.out.println("start:"+start+"len:"+len);
 				ex.write(response);
 				ex.write(new DefaultFileRegion(raf.getChannel(), start, len));
 				ex.writeAndFlush(new DefaultLastHttpContent());

@@ -305,8 +305,8 @@ public class BasicWebServerBuilder implements CommandDispatcher, WebServerCreate
 						public void initChannel(SocketChannel ch) {
 							SSLEngine engine = slc.newEngine(ch.alloc());
 							// engine.setEnabledProtocols(new String[] { "TLSv1.2" });
-							ch.pipeline().addLast(new SslHandler(engine)).addLast(new HttpServerCodec())
-									.addLast(new HttpContentCompressor())
+							ch.pipeline().addLast(new SslHandler(engine)).addLast("b",new HttpServerCodec())
+									.addLast("gzip",new HttpContentCompressor())
 									.addLast(new HttpServerKeepAliveHandler()).addLast(new LowestCatcher("HTTPS"))
 									.addLast(new HttpObjectAggregator(128 * 1024 * 1024)).addLast(new ChunkedWriteHandler())
 									.addLast(new WebSocketServerCompressionHandler()).addLast(cbr);

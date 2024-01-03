@@ -123,6 +123,7 @@ public final class Utils {
 	private static Map<String, String> extMap = new HashMap<>();
 	static {
 		Utils.extMap.put("tjs", "text/plain");
+		Utils.extMap.put("js", "text/javascript");
 	}
 
 	public static String SHA256(String data) {
