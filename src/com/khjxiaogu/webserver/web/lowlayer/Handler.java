@@ -35,10 +35,11 @@ public class Handler {
 		 * Request rq = new Request(fhr.headers(), fhr.method(), fhr.content(), requri,
 		 * ctx.channel().remoteAddress(), isSecure);
 		 */
-		Request rq = new Request(ctx, isSecure, fhr);
-		Response r = new Response(ctx, isSecure, fhr);
-		cb.call(rq, r);
-		return r.isWritten();
+		try(Request rq = new Request(ctx, isSecure, fhr)){
+			Response r = new Response(ctx, isSecure, fhr);
+			cb.call(rq, r);
+			return r.isWritten();
+		}
 	}
 
 	public Handler(CallBack cb) { this.cb = cb; }

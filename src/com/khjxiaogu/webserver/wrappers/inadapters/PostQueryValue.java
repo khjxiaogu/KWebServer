@@ -20,11 +20,19 @@ package com.khjxiaogu.webserver.wrappers.inadapters;
 import com.khjxiaogu.webserver.web.lowlayer.Request;
 import com.khjxiaogu.webserver.wrappers.StaticInStringAdapter;
 
+import io.netty.handler.codec.http.multipart.HttpData;
+
 public class PostQueryValue extends StaticInStringAdapter {
 
 	public PostQueryValue(String key) { super(key); }
 
 	@Override
-	public Object handle(Request req) throws Exception { return req.getPost().get(key); }
+	public Object handle(Request req,Class<?> paramClass) throws Exception {
+		if(HttpData.class.isAssignableFrom(paramClass)) {
+			return req.getPostMap().get(key);
+		}
+		return req.getPost().get(key);
+		
+	}
 
 }

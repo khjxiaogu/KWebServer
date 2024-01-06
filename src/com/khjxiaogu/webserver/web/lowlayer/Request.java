@@ -24,6 +24,7 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import com.khjxiaogu.webserver.Utils;
 import com.khjxiaogu.webserver.loging.SimpleLogger;
@@ -44,7 +45,7 @@ import io.netty.handler.codec.http.multipart.InterfaceHttpData.HttpDataType;
  *
  * @author khjxiaogu file: Request.java time: 2020年6月12日
  */
-public class Request {
+public class Request implements AutoCloseable{
 	private final static SimpleLogger logger = new SimpleLogger("请求解析");
 	/**
 	 * The http query(URL only).<br>
@@ -56,7 +57,7 @@ public class Request {
 	 * 请求参数.
 	 */
 	private Map<String, String> post;
-
+	private Map<String, InterfaceHttpData> postData;
 	/**
 	 * The full request path.<br>
 	 * 完整请求路径.
@@ -64,7 +65,7 @@ public class Request {
 	private String fullpath;
 	private String path;
 	private boolean isSecure;
-
+	
 	/**
 	 * Checks if is https secure connection.<br>
 	 * 是否https安全链接.
@@ -86,6 +87,7 @@ public class Request {
 	private ChannelHandlerContext ctx;
 	private FullHttpRequest fhr;
 	private URI uri;
+	private HttpPostRequestDecoder hpd;
 
 	/**
 	 * Instantiates a new Request.<br>
@@ -167,12 +169,12 @@ public class Request {
 	public Map<String, String> getPost() {
 		if (post == null) {
 			post = new HashMap<>();
-			HttpPostRequestDecoder hpd = new HttpPostRequestDecoder(new DefaultHttpDataFactory(false), fhr);
-			List<InterfaceHttpData> ihds=hpd.getBodyHttpDatas();
-			for(InterfaceHttpData ihd:ihds){
-				if (ihd.getHttpDataType() == HttpDataType.Attribute) {
+			Map<String, InterfaceHttpData> ihds=getPostMap();
+			for(Entry<String, InterfaceHttpData> ihd:ihds.entrySet()){
+				if (ihd.getValue().getHttpDataType() == HttpDataType.Attribute) {
+					
 					try {
-						post.put(ihd.getName(), ((Attribute) ihd).getValue());
+						post.put(ihd.getKey(), ((Attribute) ihd.getValue()).getValue());
 					} catch (IOException e) {
 						// TODO Auto-generated catch block
 						Request.logger.warning(e.getMessage());
@@ -184,12 +186,22 @@ public class Request {
 	}
 
 	public Map<String, InterfaceHttpData> getPostMap() {
-		Map<String, InterfaceHttpData> postmap = new HashMap<>();
-		HttpPostRequestDecoder hpd = new HttpPostRequestDecoder(new DefaultHttpDataFactory(false), fhr);
-		List<InterfaceHttpData> ihds=hpd.getBodyHttpDatas();
-		for(InterfaceHttpData ihd:ihds){
-			if (ihd.getHttpDataType() == HttpDataType.Attribute) { postmap.put(ihd.getName(), ihd); }
+		if(hpd==null) {
+			postData = new HashMap<>();
+			hpd = new HttpPostRequestDecoder(fhr);
+			List<InterfaceHttpData> ihds=hpd.getBodyHttpDatas();
+			for(InterfaceHttpData ihd:ihds){
+				postData.put(ihd.getName(), ihd);
+			}
 		}
-		return postmap;
+		
+		return postData;
+	}
+
+	@Override
+	public void close() {
+		if(hpd!=null) {
+			hpd.destroy();
+		}
 	}
 }
