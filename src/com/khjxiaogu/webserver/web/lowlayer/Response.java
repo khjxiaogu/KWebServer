@@ -21,7 +21,15 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
+import java.text.DateFormatSymbols;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.khjxiaogu.webserver.Utils;
 import com.khjxiaogu.webserver.WebServerException;
@@ -29,18 +37,25 @@ import com.khjxiaogu.webserver.WebServerException;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.DefaultFileRegion;
 import io.netty.handler.codec.http.DefaultHttpResponse;
 import io.netty.handler.codec.http.DefaultLastHttpContent;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpChunkedInput;
+import io.netty.handler.codec.http.HttpContentCompressor;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
+import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.HttpVersion;
+import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketServerCompressionHandler;
+import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.stream.ChunkedFile;
+import io.netty.handler.stream.ChunkedStream;
 
 // TODO: Auto-generated Javadoc
 /**
@@ -52,6 +67,12 @@ public class Response {
 	private boolean written = false;
 	private final FullHttpRequest cor;
 	private final ChannelHandlerContext ex;
+	private static final Pattern RANGE_HEADER = Pattern.compile("bytes=(\\d+)?-(\\d+)?");
+	private final SimpleDateFormat format = new SimpleDateFormat("EEE', 'dd' 'MMM' 'yyyy' 'HH:mm:ss 'GMT'");
+	{
+		format.setTimeZone(TimeZone.getTimeZone("GMT"));
+		format.setDateFormatSymbols(DateFormatSymbols.getInstance(Locale.ENGLISH));
+	}
 	private HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
 	/**
 	 * Instantiates a new Response with a ChannelHandlerContext object.<br>
@@ -101,14 +122,17 @@ public class Response {
 			response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html; charset=UTF-8");
 		}
 		response.setStatus(HttpResponseStatus.valueOf(status));
-
+		compressed();
 		HttpUtil.setContentLength(response, content.length());
 		ex.write(response);
 		ex.writeAndFlush(new DefaultLastHttpContent(
 		        ex.alloc().buffer(content.length()).writeBytes(content.getBytes(StandardCharsets.UTF_8))));
 		written = true;
 	}
-
+	public void compressed() {
+		if(ex.pipeline().get("gzip") == null)
+			ex.pipeline().addAfter("b", "gzip", new HttpContentCompressor());
+	}
 	/**
 	 * Write to response.<br>
 	 * 回复
@@ -157,11 +181,18 @@ public class Response {
 	public void write(int status) {
 		response.setStatus(HttpResponseStatus.valueOf(status));
 		ex.write(response);
-		ex.writeAndFlush(new DefaultLastHttpContent());
+		ex.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
 		// ex.close();
 		written = true;
 	}
-
+	public void redirect(String url) {
+		response.setStatus(HttpResponseStatus.FOUND);
+		response.headers().set(HttpHeaderNames.LOCATION,url);
+		ex.write(response);
+		ex.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
+		// ex.close();
+		written = true;
+	}
 	/**
 	 * Set header.<br>
 	 * 设置回复头值
@@ -204,55 +235,120 @@ public class Response {
 	 *               文件
 	 */
 	public void write(int status, File f) {
-		// response.headers().set(HttpHeaderNames.ACCEPT_RANGES, "bytes");
-		/*
-		 * if (response.headers().get(HttpHeaderNames.CONTENT_TYPE) == null) { String
-		 * mime = Utils.getMime(f); if (mime != null) {
-		 * response.headers().set(HttpHeaderNames.CONTENT_TYPE, mime); } }
-		 * response.setStatus(HttpResponseStatus.valueOf(status)); try (InputStream raf
-		 * = new FileInputStream(f)) { HttpUtil.setContentLength(response,
-		 * raf.available()); int min = 0; int max = raf.available(); if (status == 200)
-		 * { String range = request.headers.get(HttpHeaderNames.RANGE); if (range !=
-		 * null) { int eq = range.indexOf('='); if (eq != -1) { status = 206; int to =
-		 * range.indexOf('-'); min = Integer.parseInt(range.substring(eq + 1,
-		 * to).trim()); int fin = range.indexOf(','); if (range.length() > to + 1) { if
-		 * (fin != -1) { max = Integer.parseInt(range.substring(to + 1, fin).trim()); }
-		 * else { max = Integer.parseInt(range.substring(to + 1).trim()); } }
-		 * StringBuilder sb = new StringBuilder("bytes "); sb.append(min);
-		 * sb.append("-"); sb.append(max); sb.append("/"); sb.append(max - min);
-		 * response.headers().set(HttpHeaderNames.CONTENT_RANGE, sb.toString()); } } }
-		 * response.content().capacity(max - min); raf.skip(min);
-		 * response.content().writeBytes(raf, max); ex.writeAndFlush(response); written
-		 * = true; } catch (IOException ignore) {
-		 *
-		 * }
-		 */
+
 		if (!f.exists())
 			return;
+		Range r=parseRange();
+		if(r==null) {
+			write(416);
+			return;
+		}
+		if (isValid(f)) {
+			write(304);
+			return;
+		}
+		response.setStatus(HttpResponseStatus.valueOf(status));
+		response.headers().add(HttpHeaderNames.ACCEPT_RANGES,"bytes");
+		writeFile(f,r);
+	}
+	private void writeFile(File f,Range r) {
 		try{
 			RandomAccessFile raf = new RandomAccessFile(f, "r");
-			response.setStatus(HttpResponseStatus.valueOf(status));
-			HttpUtil.setContentLength(response, raf.length());
+			long start=r.start;
+			if(start<0) {
+				start=r.start+raf.length();
+			}
+			long len=0;
+			if(!r.isEmpty())
+				len=r.end-r.start+1;
+			long maxlen=raf.length()-start;
+			if(len<=0||len>maxlen)
+				len=maxlen;
+			
+			if(!r.isEmpty()) {
+				response.headers().add (HttpHeaderNames.CONTENT_RANGE,
+	                    "bytes "
+	                    + start
+	                    + "-"
+	                    + (len+start-1)
+	                    + "/"
+	                    + raf.length());
+				response.setStatus(HttpResponseStatus.PARTIAL_CONTENT);
+			}
+
+			HttpUtil.setContentLength(response, len);
 			if (response.headers().get(HttpHeaderNames.CONTENT_TYPE) == null) {
 				String mime = Utils.getMime(f);
-				if (mime != null) { response.headers().set(HttpHeaderNames.CONTENT_TYPE, mime); }
+				if (mime != null) {
+					if(mime.startsWith("text")||mime.startsWith("application/json"))
+						compressed();
+					response.headers().set(HttpHeaderNames.CONTENT_TYPE, mime);
+				}else{
+					compressed();
+				}
+				//compressed();
 			}
-			if (raf.length() > 102400) {
+			if(cor.method()==HttpMethod.HEAD) {
+				ex.write(response);
+				ex.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT).await();
+			}else
+			if (len > 102400||ex.pipeline().get(SslHandler.class) !=null||ex.pipeline().get(HttpContentCompressor.class)!=null) {
 				response.headers().set(HttpHeaderNames.CONTENT_ENCODING, "chunked");
+				//System.out.println("start:"+start+"len:"+len);
 				ex.write(response);
-				ex.writeAndFlush(new HttpChunkedInput(new ChunkedFile(raf)));
+				ex.writeAndFlush(new HttpChunkedInput(new ChunkedFile(raf,start,len,8192)));
 			} else {
-				ByteBuf buf = ex.alloc().buffer((int) raf.length());
-				buf.writeBytes(raf.getChannel(), (int) raf.length());
+				//System.out.println("start:"+start+"len:"+len);
 				ex.write(response);
-				ex.writeAndFlush(new DefaultLastHttpContent(buf)).await();
-				raf.close();
+				ex.write(new DefaultFileRegion(raf.getChannel(), start, len));
+				ex.writeAndFlush(new DefaultLastHttpContent());
+				//raf.close();
 			}
 			written = true;
 		} catch (IOException | InterruptedException e) {
 			throw new WebServerException(e);
 		}
-
+	}
+	 private Range parseRange() {
+        String header = cor.headers().get(HttpHeaderNames.RANGE);
+        if (header==null||header.isEmpty()) {
+            return Range.ALL;
+        }
+        Matcher m = RANGE_HEADER.matcher(header);
+        if (!m.matches()) {
+            return null;
+        }
+        String start=m.group(1);
+        String end=m.group(2);
+        long starti=-1;
+        long endi=0;
+        try {
+        	starti=Long.parseLong(start.trim());
+        }catch(NumberFormatException ex) {return null;}
+        try {
+        	endi=Long.parseLong(end.trim());
+        }catch(NumberFormatException ex) {return null;}
+        if(starti==-1&&endi!=0) {
+        	return new Range(-endi-1,0);
+        }
+        return new Range(starti,endi);
+    }
+	 
+	private boolean isValid(File file){
+		setHeader("Cache-Control", "public,max-age=10,must-revalidate");
+		long lmf = file.lastModified();
+		Date lmd = new Date();
+		if (lmf > 0) { lmd.setTime(lmf); }
+		setHeader("Last-Modified", format.format(lmd));
+		try {
+			if (cor.headers().get("If-Modified-Since") == null
+			        || format.parse(cor.headers().get("If-Modified-Since")).getTime() + 2000 <= lmf)
+				return false;
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			return false;
+		}
+		return true;
 	}
 
 	public boolean suscribeWebsocketEvents(WebsocketEvents handler) {
@@ -269,7 +365,7 @@ public class Response {
 	 * Checks if is written.<br>
 	 * 是否曾经写入过.
 	 *
-	 * @return 如果写入1过，返回true<br>
+	 * @return 如果写入过，返回true<br>
 	 *         if is written,true.
 	 */
 	public boolean isWritten() { return written; }

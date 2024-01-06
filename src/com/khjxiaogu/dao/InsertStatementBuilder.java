@@ -24,52 +24,54 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 public class InsertStatementBuilder implements InputStatement<InsertStatementBuilder> {
-	class InsertExpr {
+	private class InsertPair{
 		String key;
-		Object data;
-
-		public InsertExpr(String key, Object data) {
+		String expr;
+		public InsertPair(String key, String expr) {
+			super();
 			this.key = key;
-			this.data = data;
+			this.expr = expr;
 		}
-		public InsertExpr(String key) {
+		public InsertPair(String key) {
+			super();
 			this.key = key;
+			this.expr="?";
 		}
+		
 	}
-
 	String table;
 	Connection conn;
-	protected ArrayList<InsertExpr> inserts = new ArrayList<>();
-
+	protected ArrayList<InsertPair> inserts = new ArrayList<>();
 	public InsertStatementBuilder(String table, Connection conn) {
 		this.table = table;
 		this.conn = conn;
 	}
 
-	@Override
-	public InsertStatementBuilder set(String key, Object val) { inserts.add(new InsertExpr(key,val));return this; }
 
 	@Override
-	public InsertStatementBuilder set(String key) { inserts.add(new InsertExpr(key));return this; }
+	public InsertStatementBuilder set(String key) { inserts.add(new InsertPair(key));return this; }
+	
+	@Override
+	public InsertStatementBuilder set(String key,String expr) { inserts.add(new InsertPair(key,expr));return this; }
 	
 	@Override
 	public String getSQL() {
-		StringBuilder sql = new StringBuilder("INSERT INTO");
+		StringBuilder sql = new StringBuilder("INSERT INTO ");
 		sql.append(table);
 		sql.append("(");
 		StringBuilder datas = new StringBuilder("(");
-		Iterator<InsertExpr> it = inserts.iterator();
+		Iterator<InsertPair> it = inserts.iterator();
 		if (it.hasNext()) {
 			while (true) {
-				InsertExpr expr = it.next();
-				if (expr.key != null) { sql.append(expr.key); }
-				datas.append("?");
+				InsertPair expr = it.next();
+				sql.append(expr.key);
+				datas.append(expr.expr);
 				if (it.hasNext()) {
 					sql.append(", ");
 					datas.append(",");
 				} else {
-					sql.append(") VALUES");
-					sql.append(datas.toString());
+					sql.append(") VALUES ");
+					sql.append(datas.append(")").toString());
 					break;
 				}
 			}
@@ -78,11 +80,11 @@ public class InsertStatementBuilder implements InputStatement<InsertStatementBui
 	}
 
 	@Override
-	public boolean execute() {
+	public boolean execute(Object[] data) {
 
 		try (PreparedStatement ps = conn.prepareStatement(getSQL())) {
-			int len = inserts.size();
-			for (int i = 0; i < len; i++) { ps.setObject(i, inserts.get(i).data); }
+			int len = data.length;
+			for (int i = 0; i < len; i++) { ps.setObject(i+1, data[i]); }
 			return ps.executeUpdate() > 0;
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
@@ -93,5 +95,18 @@ public class InsertStatementBuilder implements InputStatement<InsertStatementBui
 	@Override
 	public PreparedStatement build() throws SQLException {
 		return conn.prepareStatement(getSQL());
+	}
+
+
+	@Override
+	public boolean execute() {
+		// TODO Auto-generated method stub
+		try (PreparedStatement ps = conn.prepareStatement(getSQL())) {
+			return ps.executeUpdate() > 0;
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return false;
 	}
 }

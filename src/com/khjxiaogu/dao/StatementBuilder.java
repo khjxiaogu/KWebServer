@@ -23,7 +23,10 @@ import java.sql.SQLException;
 public interface StatementBuilder {
 	boolean execute();
 
+	boolean execute(Object[] data);
+	
 	String getSQL();
+	
 	
 	PreparedStatement build() throws SQLException;
 }

@@ -152,7 +152,7 @@ public class Request implements AutoCloseable{
 	}
 
 	public HttpHeaders getHeaders() { return fhr.headers(); }
-
+	
 	public String getMethod() { return fhr.method().toString(); }
 
 	public ByteBuf getBody() { return fhr.content(); }
