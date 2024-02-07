@@ -306,10 +306,12 @@ public class BasicWebServerBuilder implements CommandDispatcher, WebServerCreate
 							SSLEngine engine = slc.newEngine(ch.alloc());
 							// engine.setEnabledProtocols(new String[] { "TLSv1.2" });
 							ch.pipeline().addLast(new SslHandler(engine)).addLast("b",new HttpServerCodec())
-									.addLast("gzip",new HttpContentCompressor())
-									.addLast(new HttpServerKeepAliveHandler()).addLast(new LowestCatcher("HTTPS"))
-									.addLast(new HttpObjectAggregator(128 * 1024 * 1024)).addLast(new ChunkedWriteHandler())
-									.addLast(new WebSocketServerCompressionHandler()).addLast(cbr);
+							.addLast(new LowestCatcher("HTTPS"))
+							.addLast(new HttpObjectAggregator(128 * 1024 * 1024))
+							.addLast(new HttpServerKeepAliveHandler())
+							.addLast("gzip",new HttpContentCompressor())
+							.addLast("cw",new ChunkedWriteHandler())
+							.addLast(new WebSocketServerCompressionHandler()).addLast(cbr);
 						}
 					}).bind(addr, port).sync().channel());
 		}
@@ -342,8 +344,10 @@ public class BasicWebServerBuilder implements CommandDispatcher, WebServerCreate
 					@Override
 					public void initChannel(SocketChannel ch) {
 						ch.pipeline().addLast("b", new HttpServerCodec())
-								.addLast(new HttpServerKeepAliveHandler()).addLast(new LowestCatcher("HTTP"))
-								.addLast(new HttpObjectAggregator(128*1024 * 1024)).addLast(new ChunkedWriteHandler())
+								.addLast(new LowestCatcher("HTTP"))
+								.addLast(new HttpObjectAggregator(128*1024 * 1024))
+								.addLast(new HttpServerKeepAliveHandler())
+								.addLast("cw",new ChunkedWriteHandler())
 								.addLast(new WebSocketServerCompressionHandler()).addLast(cbr);
 					}
 				}).bind(addr, port).sync().channel());

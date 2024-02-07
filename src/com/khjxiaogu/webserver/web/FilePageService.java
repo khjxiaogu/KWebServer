@@ -79,6 +79,7 @@ public class FilePageService implements CallBack {
 				res.write(200, f);
 			}
 		} catch (Exception ex) {
+			logger.printStackTrace(ex);
 			try {
 				res.write(500, ex.getMessage().getBytes("UTF-8"));
 			} catch (UnsupportedEncodingException e) {

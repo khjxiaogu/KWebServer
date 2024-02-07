@@ -115,6 +115,7 @@ public class Request implements AutoCloseable{
 			Request.logger.warning(e.getMessage());
 		}
 		path = uri.getPath();
+		if(path==null)path="/";
 		fullpath = path;
 		this.isSecure = isSecure;
 	}

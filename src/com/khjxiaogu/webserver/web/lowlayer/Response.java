@@ -24,10 +24,13 @@ import java.nio.charset.StandardCharsets;
 import java.text.DateFormatSymbols;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.TimeZone;
+import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -36,6 +39,7 @@ import com.khjxiaogu.webserver.WebServerException;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.DefaultFileRegion;
 import io.netty.handler.codec.http.DefaultHttpResponse;
@@ -130,8 +134,16 @@ public class Response {
 		written = true;
 	}
 	public void compressed() {
-		if(ex.pipeline().get("gzip") == null)
-			ex.pipeline().addAfter("b", "gzip", new HttpContentCompressor());
+		if(ex.pipeline().get("gzip") == null) {
+			HttpChunkContentCompressor hccc=new HttpChunkContentCompressor();
+			try {//Hack compress to add dynamically
+				hccc.decode(ex, cor, new ArrayList<>(1));
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			ex.pipeline().addBefore("cw", "gzip", hccc);
+			
+		}
 	}
 	/**
 	 * Write to response.<br>
@@ -243,7 +255,7 @@ public class Response {
 			write(416);
 			return;
 		}
-		if (isValid(f)) {
+		if (checkCacheValid(f)) {
 			write(304);
 			return;
 		}
@@ -254,6 +266,9 @@ public class Response {
 	private void writeFile(File f,Range r) {
 		try{
 			RandomAccessFile raf = new RandomAccessFile(f, "r");
+			if(!r.isEmpty()) {
+				response.setStatus(HttpResponseStatus.PARTIAL_CONTENT);
+			}
 			long start=r.start;
 			if(start<0) {
 				start=r.start+raf.length();
@@ -288,24 +303,41 @@ public class Response {
 				}
 				//compressed();
 			}
+			/*if (len > 102400||ex.pipeline().get(SslHandler.class) !=null||ex.pipeline().get(HttpContentCompressor.class)!=null)
+				response.headers().set(HttpHeaderNames.TRANSFER_ENCODING, "chunked");*/
 			if(cor.method()==HttpMethod.HEAD) {
+				
 				ex.write(response);
-				ex.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT).await();
+				ex.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
+				raf.close();
 			}else
 			if (len > 102400||ex.pipeline().get(SslHandler.class) !=null||ex.pipeline().get(HttpContentCompressor.class)!=null) {
-				response.headers().set(HttpHeaderNames.CONTENT_ENCODING, "chunked");
-				//System.out.println("start:"+start+"len:"+len);
+				System.out.println("chunked start:"+start+"len:"+len);
+				response.headers().set(HttpHeaderNames.CONTENT_LENGTH, len);
+				response.headers().set(HttpHeaderNames.TRANSFER_ENCODING, HttpHeaderValues.CHUNKED);
+				/*for(Entry<String, String> iv:response.headers()) {
+					System.out.println(iv.getKey()+":"+iv.getValue());
+				}*/
 				ex.write(response);
-				ex.writeAndFlush(new HttpChunkedInput(new ChunkedFile(raf,start,len,8192)));
+				
+				ChannelFuture sendFileFuture=ex.writeAndFlush(new HttpChunkedInput(new ChunkedFile(raf,start,len,8192)), ex.newProgressivePromise());
+				//sendFileFuture.await();
+				//System.out.println("finished");
+			   // if (!(cor.headers().contains("Connection") && cor.headers().get("Connection") == "close")) {
+	           //     sendFileFuture.addListener(ChannelFutureListener.CLOSE);
+	            //}
+				
+				//future.addListener(null)
 			} else {
 				//System.out.println("start:"+start+"len:"+len);
+				response.headers().set(HttpHeaderNames.CONTENT_LENGTH, len);
 				ex.write(response);
-				ex.write(new DefaultFileRegion(raf.getChannel(), start, len));
-				ex.writeAndFlush(new DefaultLastHttpContent());
+				ex.writeAndFlush(new DefaultFileRegion(raf.getChannel(), start, len));
+				//ex.writeAndFlush(new DefaultLastHttpContent());
 				//raf.close();
 			}
 			written = true;
-		} catch (IOException | InterruptedException e) {
+		} catch (IOException e) {
 			throw new WebServerException(e);
 		}
 	}
@@ -322,32 +354,76 @@ public class Response {
         String end=m.group(2);
         long starti=-1;
         long endi=0;
-        try {
-        	starti=Long.parseLong(start.trim());
-        }catch(NumberFormatException ex) {return null;}
-        try {
-        	endi=Long.parseLong(end.trim());
-        }catch(NumberFormatException ex) {return null;}
+        if(start!=null)
+	        try {
+	        	starti=Long.parseLong(start.trim());
+	        }catch(NumberFormatException ex) {return null;}
+        if(end!=null)
+	        try {
+	        	endi=Long.parseLong(end.trim());
+	        }catch(NumberFormatException ex) {return null;}
         if(starti==-1&&endi!=0) {
         	return new Range(-endi-1,0);
         }
         return new Range(starti,endi);
     }
-	 
-	private boolean isValid(File file){
-		setHeader("Cache-Control", "public,max-age=10,must-revalidate");
+	private String getETag(File file) {
+		long lmf = file.lastModified();
+		return "\""+lmf+"\"";
+	}
+	public boolean checkIdentical(File file) {
+		String etag=getETag(file);
+		if(cor.headers().get(HttpHeaderNames.IF_MATCH)!=null&&!cor.headers().get(HttpHeaderNames.IF_MATCH).equals(etag)) {
+			return false;
+		}
+		return true;
+	}
+	public boolean checkETagValid(String tag) {
+		String etag="\""+tag+"\"";
+		setHeader(HttpHeaderNames.ETAG,etag);
+		if (cor.headers().get(HttpHeaderNames.IF_NONE_MATCH)==null||!cor.headers().get(HttpHeaderNames.IF_NONE_MATCH).equals(etag)){
+			return false;
+		}
+		return true;
+	}
+	public boolean checkLastModifiedValid(Date date) {
+		setHeader(HttpHeaderNames.LAST_MODIFIED, format.format(date));
+		try {
+			if (cor.headers().get(HttpHeaderNames.IF_MODIFIED_SINCE) == null || format.parse(cor.headers().get(HttpHeaderNames.IF_MODIFIED_SINCE)).getTime() + 2000 <= date.getTime()){
+				return false;
+			}
+		} catch (ParseException e) {
+			return false;
+		}
+		return true;
+	}
+	/*
+	 * check Does we need to send contents to client or modify on server?
+	 * true: content unchanged
+	 * false: content changed
+	 * 
+	 * */
+	private  boolean checkCacheValid(File file){
+		setHeader(HttpHeaderNames.CACHE_CONTROL, "public,max-age=10,must-revalidate");
+
+		String etag=getETag(file);
+		setHeader(HttpHeaderNames.ETAG,etag);
+		
 		long lmf = file.lastModified();
 		Date lmd = new Date();
 		if (lmf > 0) { lmd.setTime(lmf); }
-		setHeader("Last-Modified", format.format(lmd));
+		setHeader(HttpHeaderNames.LAST_MODIFIED, format.format(lmd));
+		
 		try {
-			if (cor.headers().get("If-Modified-Since") == null
-			        || format.parse(cor.headers().get("If-Modified-Since")).getTime() + 2000 <= lmf)
-				return false;
+			if ((cor.headers().get(HttpHeaderNames.IF_MODIFIED_SINCE) == null || format.parse(cor.headers().get(HttpHeaderNames.IF_MODIFIED_SINCE)).getTime() + 2000 <= lmf)
+				&&(cor.headers().get(HttpHeaderNames.IF_NONE_MATCH)==null||!cor.headers().get(HttpHeaderNames.IF_NONE_MATCH).equals(etag))
+				) {
+					return false;
+				}
 		} catch (ParseException e) {
-			// TODO Auto-generated catch block
 			return false;
 		}
+
 		return true;
 	}
 

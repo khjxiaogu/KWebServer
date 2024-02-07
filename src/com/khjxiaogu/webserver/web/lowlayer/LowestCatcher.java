@@ -27,6 +27,7 @@ public class LowestCatcher extends ChannelDuplexHandler {
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
 		// Uncaught exceptions from inbound handlers will propagate up to this handler
+		logger.printStackTrace(cause);
 		ctx.close();
 	}
 
