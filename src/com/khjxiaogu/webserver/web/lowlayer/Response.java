@@ -89,6 +89,7 @@ public class Response {
 		cor = req;
 		ex = t;
 		if (isSecure) { response.headers().set("Strict-Transport-Security", "max-age=15556000"); }
+		response.headers().set(HttpHeaderNames.SERVER,"KWebServer");
 		response.headers().set("Access-Control-Allow-Origin", "*");
 	}
 

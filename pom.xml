@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.khjxiaogu</groupId>
 	<artifactId>KWebServer</artifactId>
-	<version>0.0.16</version>
+	<version>0.0.17</version>
 	<name>kwebserver</name>
 	<description>A simple light-weighted webserver.</description>
 	<url>http://khjxiaogu.github.io/KWebServer</url>
