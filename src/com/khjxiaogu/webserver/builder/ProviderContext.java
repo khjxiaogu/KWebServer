@@ -17,11 +17,14 @@
  */
 package com.khjxiaogu.webserver.builder;
 
+import java.util.function.Function;
+
 import com.khjxiaogu.webserver.command.CommandDispatcher;
 import com.khjxiaogu.webserver.command.CommandExp;
 import com.khjxiaogu.webserver.command.CommandExpSplitter.SplittedExp;
 import com.khjxiaogu.webserver.command.CommandHandler;
 import com.khjxiaogu.webserver.command.CommandSender;
+import com.khjxiaogu.webserver.web.CallBack;
 import com.khjxiaogu.webserver.web.ContextHandler;
 import com.khjxiaogu.webserver.web.ForceSecureHandler;
 import com.khjxiaogu.webserver.web.ForceSecureHandler.Protocol;
@@ -41,12 +44,12 @@ public class ProviderContext<S extends ServerProvider, T extends ContextHandler<
 	private T sup;
 	private S provider;
 	private CommandDispatcher command;
-	private ServerProvider sec;
+	private CallBack sec;
 
 	protected ProviderContext(S provider, T sup, CommandDispatcher command) {
 		this.sup = sup;
 		this.provider = provider;
-		sec = provider;
+		sec = provider.getListener();
 		this.command = command;
 	}
 
@@ -84,7 +87,7 @@ public class ProviderContext<S extends ServerProvider, T extends ContextHandler<
 	 */
 	@Override
 	public ProviderContext<S, T> forceHttps() {
-		sec = new ForceSecureHandler(provider.getListener(), Protocol.HTTPS);
+		sec = new ForceSecureHandler(sec, Protocol.HTTPS).getListener();
 		return this;
 	}
 
@@ -97,7 +100,7 @@ public class ProviderContext<S extends ServerProvider, T extends ContextHandler<
 	 */
 	@Override
 	public ProviderContext<S, T> forceHttp() {
-		sec = new ForceSecureHandler(provider.getListener(), Protocol.HTTP);
+		sec = new ForceSecureHandler(sec, Protocol.HTTP).getListener();
 		return this;
 	}
 
@@ -145,4 +148,10 @@ public class ProviderContext<S extends ServerProvider, T extends ContextHandler<
 
 	@Override
 	public boolean dispatchCommand(String msg, CommandSender user) { return command.dispatchCommand(msg, user); }
+
+	@Override
+	public ProviderContext<S, T> wrap(Function<CallBack, CallBack> wrapper) {
+		sec=wrapper.apply(sec);
+		return this;
+	}
 }

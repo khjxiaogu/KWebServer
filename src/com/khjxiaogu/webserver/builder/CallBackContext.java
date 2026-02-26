@@ -17,6 +17,8 @@
  */
 package com.khjxiaogu.webserver.builder;
 
+import java.util.function.Function;
+
 import com.khjxiaogu.webserver.command.CommandDispatcher;
 import com.khjxiaogu.webserver.command.CommandExp;
 import com.khjxiaogu.webserver.command.CommandExpSplitter.SplittedExp;
@@ -151,4 +153,9 @@ public class CallBackContext<T extends ContextHandler<T>, S extends CallBack>
 		if (provider instanceof CommandHandler) { add((CommandHandler) provider); }
 		return this;
 	};
+	@Override
+	public CallBackContext<T, S> wrap(Function<CallBack, CallBack> wrapper) {
+		sec=wrapper.apply(sec);
+		return this;
+	}
 }

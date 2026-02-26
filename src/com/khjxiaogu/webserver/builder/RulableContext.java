@@ -17,6 +17,10 @@
  */
 package com.khjxiaogu.webserver.builder;
 
+import java.util.function.Function;
+
+import com.khjxiaogu.webserver.web.CallBack;
+
 public interface RulableContext<T> {
 
 	/**
@@ -47,5 +51,7 @@ public interface RulableContext<T> {
 	 *         返回自身
 	 */
 	T rule(String rule);
+	
+	T wrap(Function<CallBack,CallBack> wrapper);
 
 }

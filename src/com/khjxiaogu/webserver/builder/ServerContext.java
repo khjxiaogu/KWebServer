@@ -17,6 +17,8 @@
  */
 package com.khjxiaogu.webserver.builder;
 
+import java.util.function.Function;
+
 import com.khjxiaogu.webserver.command.CommandDispatcher;
 import com.khjxiaogu.webserver.command.CommandExp;
 import com.khjxiaogu.webserver.command.CommandExpSplitter.SplittedExp;
@@ -56,15 +58,16 @@ public class ServerContext<T extends ContextHandler<T>, S extends ContextHandler
 
 	@Override
 	public ServerContext<T, S> forceHttps() {
-		sec = new ForceSecureHandler(Intern, Protocol.HTTPS).getListener();
+		sec = new ForceSecureHandler(sec, Protocol.HTTPS).getListener();
 		return this;
 	}
 
 	@Override
 	public ServerContext<T, S> forceHttp() {
-		sec = new ForceSecureHandler(Intern, Protocol.HTTP).getListener();
+		sec = new ForceSecureHandler(sec, Protocol.HTTP).getListener();
 		return this;
 	}
+	
 
 	/**
 	 * Register command.<br>
@@ -158,4 +161,10 @@ public class ServerContext<T extends ContextHandler<T>, S extends ContextHandler
 
 	@Override
 	public void call(Request req, Response res) { sec.call(req, res); }
+
+	@Override
+	public ServerContext<T, S> wrap(Function<CallBack, CallBack> wrapper) {
+		sec=wrapper.apply(sec);
+		return this;
+	}
 }
