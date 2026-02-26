@@ -28,18 +28,14 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.TimeZone;
-import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.khjxiaogu.webserver.Utils;
 import com.khjxiaogu.webserver.WebServerException;
 
-import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.DefaultFileRegion;
 import io.netty.handler.codec.http.DefaultHttpResponse;
@@ -49,19 +45,15 @@ import io.netty.handler.codec.http.HttpChunkedInput;
 import io.netty.handler.codec.http.HttpContentCompressor;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
-import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.LastHttpContent;
-import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketServerCompressionHandler;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.stream.ChunkedFile;
-import io.netty.handler.stream.ChunkedStream;
 
-// TODO: Auto-generated Javadoc
 /**
  * Class Response. 回复体
  *
@@ -313,7 +305,6 @@ public class Response {
 				raf.close();
 			}else
 			if (len > 102400||ex.pipeline().get(SslHandler.class) !=null||ex.pipeline().get(HttpContentCompressor.class)!=null) {
-				System.out.println("chunked start:"+start+"len:"+len);
 				response.headers().set(HttpHeaderNames.CONTENT_LENGTH, len);
 				response.headers().set(HttpHeaderNames.TRANSFER_ENCODING, HttpHeaderValues.CHUNKED);
 				/*for(Entry<String, String> iv:response.headers()) {

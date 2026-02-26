@@ -64,25 +64,10 @@ public class Request implements AutoCloseable{
 	 */
 	private String fullpath;
 	private String path;
+	private String basePath;
 	private boolean isSecure;
 	
-	/**
-	 * Checks if is https secure connection.<br>
-	 * 是否https安全链接.
-	 *
-	 * @return 如果是https安全链接，返回true<br>
-	 *         if is https secure connection,true.
-	 */
-	public boolean isSecure() { return isSecure; }
 
-	/**
-	 * Gets the current request path.<br>
-	 * 获取当前请求路径.
-	 *
-	 * @return current request path<br>
-	 *         当前请求路径
-	 */
-	public String getCurrentPath() { return path; }
 
 	private ChannelHandlerContext ctx;
 	private FullHttpRequest fhr;
@@ -117,6 +102,7 @@ public class Request implements AutoCloseable{
 		path = uri.getPath();
 		if(path==null)path="/";
 		fullpath = path;
+		basePath="";
 		this.isSecure = isSecure;
 	}
 
@@ -129,6 +115,7 @@ public class Request implements AutoCloseable{
 		if (pos == -1) {
 			path = "/";
 		} else {
+			basePath+=path.substring(0,pos);
 			path = path.substring(pos);
 		}
 	}
@@ -142,6 +129,7 @@ public class Request implements AutoCloseable{
 		if (path.length() <= starts.length()) {
 			path = "/";
 		} else {
+			basePath+=path.substring(0,starts.length());
 			path = path.substring(starts.length());
 		}
 	}
@@ -161,7 +149,27 @@ public class Request implements AutoCloseable{
 	public String getFullpath() { return fullpath; }
 
 	public InetSocketAddress getRemote() { return (InetSocketAddress) ctx.channel().remoteAddress(); }
+	
+	/**
+	 * Checks if is https secure connection.<br>
+	 * 是否https安全链接.
+	 *
+	 * @return 如果是https安全链接，返回true<br>
+	 *         if is https secure connection,true.
+	 */
+	public boolean isSecure() { return isSecure; }
 
+	/**
+	 * Gets the current request path.<br>
+	 * 获取当前请求路径.
+	 *
+	 * @return current request path<br>
+	 *         当前请求路径
+	 */
+	public String getCurrentPath() { return path; }
+	
+	public String getBasePath() { return basePath; }
+	
 	public String getQueryString() { return uri.getQuery(); }
 	public String getRawQueryString() { return uri.getRawQuery(); }
 

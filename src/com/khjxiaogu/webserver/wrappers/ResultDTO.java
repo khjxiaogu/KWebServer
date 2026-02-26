@@ -17,6 +17,7 @@
  */
 package com.khjxiaogu.webserver.wrappers;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -140,5 +141,9 @@ public class ResultDTO {
 		ResultDTO res=new ResultDTO(302);
 		res.addHeader("Location",url);
 		return res;
+	}
+	public void setFileName(String fn) {
+		addHeader("Content-Disposition", "attachment; filename=\"" + new String(fn.getBytes(StandardCharsets.UTF_8),StandardCharsets.ISO_8859_1) + "\"");
+		
 	}
 }

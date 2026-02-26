@@ -1,18 +1,14 @@
 package com.khjxiaogu.webserver.web.lowlayer;
 
-import java.lang.reflect.Field;
 import java.util.List;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.compression.CompressionOptions;
-import io.netty.handler.codec.compression.StandardCompressionOptions;
 import io.netty.handler.codec.http.DefaultHttpContent;
 import io.netty.handler.codec.http.HttpContentCompressor;
-import io.netty.handler.codec.http.HttpContentEncoder;
 import io.netty.handler.codec.http.HttpHeaderNames;
-import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 
@@ -27,7 +23,6 @@ final class HttpChunkContentCompressor extends HttpContentCompressor {
 
 	@Override
 	public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-		System.out.println(msg.getClass().getName());
 		if (msg instanceof ByteBuf) {
 			// convert ByteBuf to HttpContent to make it work with compression. This is
 			// needed as we use the

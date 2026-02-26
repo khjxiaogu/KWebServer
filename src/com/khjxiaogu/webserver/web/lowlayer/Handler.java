@@ -21,6 +21,7 @@ import java.io.IOException;
 
 import com.khjxiaogu.webserver.loging.SimpleLogger;
 import com.khjxiaogu.webserver.web.CallBack;
+import com.khjxiaogu.webserver.web.RequestContext;
 import com.khjxiaogu.webserver.web.ServerProvider;
 
 import io.netty.channel.ChannelHandlerContext;
@@ -37,8 +38,11 @@ public class Handler {
 		 */
 		try(Request rq = new Request(ctx, isSecure, fhr)){
 			Response r = new Response(ctx, isSecure, fhr);
+			RequestContext.setRequestData(ctx, rq, r,fhr);
 			cb.call(rq, r);
 			return r.isWritten();
+		}finally {
+			RequestContext.clear();
 		}
 	}
 
