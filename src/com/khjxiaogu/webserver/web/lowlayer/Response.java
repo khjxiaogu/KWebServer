@@ -160,10 +160,12 @@ public class Response {
 	 *                回复体
 	 */
 	public void write(int status, byte[] content) {
-		if (response.headers().get(HttpHeaderNames.CONTENT_TYPE) == null) {
+		String type=response.headers().get(HttpHeaderNames.CONTENT_TYPE);
+		if (type == null) {
 			response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html; charset=UTF-8");
 			compressed();
-		}
+		}else if(type.startsWith("text"))
+			compressed();
 		response.setStatus(HttpResponseStatus.valueOf(status));
 		HttpUtil.setContentLength(response, content.length);
 		ex.write(response);
