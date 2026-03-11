@@ -35,6 +35,7 @@ import java.util.regex.Pattern;
 import com.khjxiaogu.webserver.Utils;
 import com.khjxiaogu.webserver.WebServerException;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.DefaultFileRegion;
@@ -116,14 +117,25 @@ public class Response {
 	 */
 	public void write(int status, String content) {
 		if (response.headers().get(HttpHeaderNames.CONTENT_TYPE) == null) {
-			response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html; charset=UTF-8");
+			if(content.length()>0) {
+				Character ch=content.charAt(0);
+				if(ch=='('||ch=='{'||ch=='[') {//guess json
+					response.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json; charset=UTF-8");
+				}else
+					response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html; charset=UTF-8");
+			}
+		}
+		if(response.headers().get(HttpHeaderNames.CACHE_CONTROL)==null) {
+			setHeader(HttpHeaderNames.CACHE_CONTROL, "private, no-store, no-cache, must-revalidate, max-age=0");
 		}
 		response.setStatus(HttpResponseStatus.valueOf(status));
 		compressed();
-		HttpUtil.setContentLength(response, content.length());
+		byte[] data=content.getBytes(StandardCharsets.UTF_8);
+		ByteBuf bb=ex.alloc().buffer(content.length()*2).writeBytes(data);
+		HttpUtil.setContentLength(response, data.length);
 		ex.write(response);
-		ex.writeAndFlush(new DefaultLastHttpContent(
-		        ex.alloc().buffer(content.length()).writeBytes(content.getBytes(StandardCharsets.UTF_8))));
+		
+		ex.writeAndFlush(new DefaultLastHttpContent(bb));
 		written = true;
 	}
 	public void compressed() {
@@ -150,6 +162,7 @@ public class Response {
 	public void write(int status, byte[] content) {
 		if (response.headers().get(HttpHeaderNames.CONTENT_TYPE) == null) {
 			response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html; charset=UTF-8");
+			compressed();
 		}
 		response.setStatus(HttpResponseStatus.valueOf(status));
 		HttpUtil.setContentLength(response, content.length);

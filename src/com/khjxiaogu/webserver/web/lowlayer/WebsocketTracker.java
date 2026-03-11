@@ -43,7 +43,7 @@ public class WebsocketTracker extends SimpleChannelInboundHandler<WebSocketFrame
 		this.ev = ev;
 		conn = ctx.channel();
 		WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory(
-		        "wss://" + request.headers().get(HttpHeaderNames.HOST) + request.uri(), null, true);
+		        "wss://" + request.headers().get(HttpHeaderNames.HOST) + request.uri(), null, true,10*1024*1024);
 		WebSocketServerHandshaker handshaker = wsFactory.newHandshaker(request);
 		if (handshaker == null) {
 			WebSocketServerHandshakerFactory.sendUnsupportedVersionResponse(ctx.channel());
