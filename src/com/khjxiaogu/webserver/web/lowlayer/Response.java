@@ -36,6 +36,7 @@ import com.khjxiaogu.webserver.Utils;
 import com.khjxiaogu.webserver.WebServerException;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.DefaultFileRegion;
@@ -65,11 +66,12 @@ public class Response {
 	private final FullHttpRequest cor;
 	private final ChannelHandlerContext ex;
 	private static final Pattern RANGE_HEADER = Pattern.compile("bytes=(\\d+)?-(\\d+)?");
-	private final SimpleDateFormat format = new SimpleDateFormat("EEE', 'dd' 'MMM' 'yyyy' 'HH:mm:ss 'GMT'");
-	{
+	private final static ThreadLocal<SimpleDateFormat> format=ThreadLocal.withInitial(()->{
+		SimpleDateFormat format=new SimpleDateFormat("EEE', 'dd' 'MMM' 'yyyy' 'HH:mm:ss 'GMT'");
 		format.setTimeZone(TimeZone.getTimeZone("GMT"));
 		format.setDateFormatSymbols(DateFormatSymbols.getInstance(Locale.ENGLISH));
-	}
+		return format;
+	});
 	private HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
 	/**
 	 * Instantiates a new Response with a ChannelHandlerContext object.<br>
@@ -105,7 +107,18 @@ public class Response {
 		}
 		write(status, content);
 	}
-
+	public HttpOutputStream openStream(int status) {
+		if(response.headers().get(HttpHeaderNames.CACHE_CONTROL)==null) {
+			setHeader(HttpHeaderNames.CACHE_CONTROL, "private, no-store, no-cache, must-revalidate, max-age=0");
+		}
+		response.setStatus(HttpResponseStatus.valueOf(status));
+		ex.write(response);
+		written = true;
+		return new HttpOutputStream(ex.channel());
+	}
+	public Channel getChannel() {
+		return ex.channel();
+	}
 	/**
 	 * Write to response.<br>
 	 * 回复
@@ -375,8 +388,8 @@ public class Response {
         return new Range(starti,endi);
     }
 	private String getETag(File file) {
-		long lmf = file.lastModified();
-		return "\""+lmf+"\"";
+
+		return "\""+String.format("%016x%016x", file.lastModified(),file.length())+"\"";
 	}
 	public boolean checkIdentical(File file) {
 		String etag=getETag(file);
@@ -394,9 +407,10 @@ public class Response {
 		return true;
 	}
 	public boolean checkLastModifiedValid(Date date) {
-		setHeader(HttpHeaderNames.LAST_MODIFIED, format.format(date));
+		SimpleDateFormat cfm=format.get();
+		setHeader(HttpHeaderNames.LAST_MODIFIED, cfm.format(date));
 		try {
-			if (cor.headers().get(HttpHeaderNames.IF_MODIFIED_SINCE) == null || format.parse(cor.headers().get(HttpHeaderNames.IF_MODIFIED_SINCE)).getTime() + 2000 <= date.getTime()){
+			if (cor.headers().get(HttpHeaderNames.IF_MODIFIED_SINCE) == null || cfm.parse(cor.headers().get(HttpHeaderNames.IF_MODIFIED_SINCE)).getTime() + 2000 <= date.getTime()){
 				return false;
 			}
 		} catch (ParseException e) {
@@ -419,10 +433,11 @@ public class Response {
 		long lmf = file.lastModified();
 		Date lmd = new Date();
 		if (lmf > 0) { lmd.setTime(lmf); }
-		setHeader(HttpHeaderNames.LAST_MODIFIED, format.format(lmd));
+		SimpleDateFormat cfm=format.get();
+		setHeader(HttpHeaderNames.LAST_MODIFIED, cfm.format(lmd));
 		
 		try {
-			if ((cor.headers().get(HttpHeaderNames.IF_MODIFIED_SINCE) == null || format.parse(cor.headers().get(HttpHeaderNames.IF_MODIFIED_SINCE)).getTime() + 2000 <= lmf)
+			if ((cor.headers().get(HttpHeaderNames.IF_MODIFIED_SINCE) == null || cfm.parse(cor.headers().get(HttpHeaderNames.IF_MODIFIED_SINCE)).getTime() + 2000 <= lmf)
 				&&(cor.headers().get(HttpHeaderNames.IF_NONE_MATCH)==null||!cor.headers().get(HttpHeaderNames.IF_NONE_MATCH).equals(etag))
 				) {
 					return false;
